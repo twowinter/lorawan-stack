@@ -12,16 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package joinserver
+package interop
 
 import (
-	"go.thethings.network/lorawan-stack/pkg/interop"
+	"go.thethings.network/lorawan-stack/pkg/errors"
 )
 
-type interopServer struct {
-	JS *JoinServer
-}
-
-// RegisterInterop registers the NS-JS and AS-JS interop services.
-func (s interopServer) RegisterInterop(srv *interop.Server) {
-}
+var (
+	errUnknownMACVersion = errors.DefineInvalidArgument("unknown_mac_version", "unknown MAC version")
+	errInvalidLength = errors.DefineInvalidArgument("invalid_length", "invalid length")
+)
