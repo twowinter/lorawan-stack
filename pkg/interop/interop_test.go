@@ -26,43 +26,6 @@ import (
 	"go.thethings.network/lorawan-stack/pkg/util/test/assertions/should"
 )
 
-func handler(c echo.Context) error {
-	return nil
-}
-
-func TestGroup(t *testing.T) {
-	a := assertions.New(t)
-	s, err := New(test.Context(), config.Interop{})
-	if !a.So(err, should.BeNil) {
-		t.Fatal("Could not create an interop instance")
-	}
-
-	a.So(s.server, should.NotHaveRoute, "GET", "/")
-	s.GET("/", handler)
-	a.So(s.server, should.HaveRoute, "GET", "/")
-
-	a.So(s.server, should.NotHaveRoute, "POST", "/bar")
-	s.POST("/bar", handler)
-	a.So(s.server, should.NotHaveRoute, "GET", "/bar")
-	a.So(s.server, should.HaveRoute, "POST", "/bar")
-
-	{
-		grp := s.Group("/")
-		grp.GET("/baz", handler)
-		a.So(s.server, should.HaveRoute, "GET", "/baz")
-	}
-
-	{
-		grp := s.Group("/group")
-		grp.GET("/g", handler)
-		a.So(s.server, should.HaveRoute, "GET", "/group/g")
-
-		ggrp := grp.Group("/quu")
-		ggrp.GET("/q", handler)
-		a.So(s.server, should.HaveRoute, "GET", "/group/quu/q")
-	}
-}
-
 func TestServeHTTP(t *testing.T) {
 	a := assertions.New(t)
 	s, err := New(test.Context(), config.Interop{})
@@ -72,27 +35,12 @@ func TestServeHTTP(t *testing.T) {
 
 	// HTTP server returns 200 on valid route
 	{
-		req := httptest.NewRequest(echo.GET, "/", nil)
+		req := httptest.NewRequest(echo.POST, "/", nil)
 		rec := httptest.NewRecorder()
-
-		s.GET("/", handler)
 
 		s.ServeHTTP(rec, req)
 
 		resp := rec.Result()
-		a.So(resp.StatusCode, should.Equal, http.StatusOK)
+		a.So(resp.StatusCode, should.Equal, http.StatusBadRequest)
 	}
-}
-
-func TestRootGroup(t *testing.T) {
-	a := assertions.New(t)
-	s, err := New(test.Context(), config.Interop{})
-	if !a.So(err, should.BeNil) {
-		t.Fatal("Could not create an interop instance")
-	}
-
-	s.RootGroup("/sub")
-	a.So(s.server, should.NotHaveRoute, "GET", "/")
-	a.So(s.server, should.NotHaveRoute, "GET", "/sub/another")
-	a.So(s.server, should.HaveRoute, "GET", "/sub")
 }
