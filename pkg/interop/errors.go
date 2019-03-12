@@ -15,6 +15,9 @@
 package interop
 
 import (
+	"net/http"
+
+	"github.com/labstack/echo"
 	"go.thethings.network/lorawan-stack/pkg/errors"
 )
 
@@ -52,4 +55,32 @@ func defineError(name string, result Result, message string) ResultError {
 type ResultError struct {
 	errors.Definition
 	Result Result
+}
+
+// ErrorHandler is an echo.HTTPErrorHandler.
+func ErrorHandler(err error, c echo.Context) {
+	resultError, isResultError := err.(ResultError)
+	if header, ok := c.Get(headerKey).(*RawMessageHeader); ok {
+		answerHeader, err := header.AnswerHeader()
+		if err != nil {
+			c.NoContent(http.StatusBadRequest)
+			return
+		}
+		if isResultError {
+			c.JSON(http.StatusBadRequest, ErrorMessage{
+				RawMessageHeader: answerHeader,
+				Result:           resultError.Result,
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, ErrorMessage{
+				RawMessageHeader: answerHeader,
+				Result:           ResultOther,
+			})
+		}
+		return
+	} else if isResultError {
+		c.NoContent(http.StatusBadRequest)
+	} else {
+		c.NoContent(http.StatusInternalServerError)
+	}
 }
