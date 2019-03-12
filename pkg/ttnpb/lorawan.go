@@ -212,3 +212,24 @@ func (v *RxDelay) UnmarshalText(b []byte) error {
 	*v = RxDelay(i)
 	return nil
 }
+
+// MarshalJSON implements json.Marshaler interface.
+func (v RxDelay) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Itoa(int(v))), nil
+}
+
+// UnmarshalJSON implements json.Marshaler interface.
+func (v *RxDelay) UnmarshalJSON(data []byte) error {
+	i, err := strconv.Atoi(string(data))
+	if err != nil {
+		return err
+	}
+	if i > int(RX_DELAY_15) {
+		return errFieldHasMax.WithAttributes(
+			"lorawan_field", "RxDelay",
+			"max", RX_DELAY_15,
+		)
+	}
+	*v = RxDelay(i)
+	return nil
+}
