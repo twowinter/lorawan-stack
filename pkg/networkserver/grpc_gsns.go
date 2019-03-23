@@ -443,7 +443,6 @@ func (ns *NetworkServer) handleUplink(ctx context.Context, up *ttnpb.UplinkMessa
 	var cmds []*ttnpb.MACCommand
 	for r := bytes.NewReader(mac); r.Len() > 0; {
 		cmd := &ttnpb.MACCommand{}
-		logger.Debug("Reading MAC command...")
 		if err := lorawan.DefaultMACCommands.ReadUplink(r, cmd); err != nil {
 			logger.WithFields(log.Fields(
 				"bytes_left", r.Len(),
