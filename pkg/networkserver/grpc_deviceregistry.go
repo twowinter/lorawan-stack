@@ -61,7 +61,7 @@ func (ns *NetworkServer) Set(ctx context.Context, req *ttnpb.SetEndDeviceRequest
 			addDownlinkTask = ttnpb.HasAnyField(req.FieldMask.Paths,
 				"mac_state.device_class",
 				"queued_application_downlinks",
-			) && req.EndDevice.MACState.DeviceClass != ttnpb.CLASS_A &&
+			) && req.EndDevice.GetMACState().GetDeviceClass() != ttnpb.CLASS_A &&
 				(len(req.EndDevice.QueuedApplicationDownlinks) > 0 || !req.EndDevice.MACState.CurrentParameters.Equal(req.EndDevice.MACState.DesiredParameters))
 			return &req.EndDevice, req.FieldMask.Paths, nil
 		}
@@ -257,9 +257,11 @@ func (ns *NetworkServer) Set(ctx context.Context, req *ttnpb.SetEndDeviceRequest
 			sets = append(sets, "session.started_at")
 		}
 
-		if err := resetMACState(&req.EndDevice, ns.FrequencyPlans, ns.defaultMACSettings); err != nil {
+		macState, err := newMACState(&req.EndDevice, ns.FrequencyPlans, ns.defaultMACSettings)
+		if err != nil {
 			return nil, nil, err
 		}
+		req.EndDevice.MACState = macState
 		sets = append(sets, "mac_state")
 
 		addDownlinkTask = req.EndDevice.MACState.DeviceClass != ttnpb.CLASS_A &&
