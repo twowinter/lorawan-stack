@@ -714,7 +714,6 @@ func (ns *NetworkServer) handleJoin(ctx context.Context, up *ttnpb.UplinkMessage
 			"lorawan_phy_version",
 			"lorawan_version",
 			"mac_settings",
-			"mac_state",
 			"session.dev_addr",
 		},
 	)

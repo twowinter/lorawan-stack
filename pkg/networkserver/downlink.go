@@ -498,6 +498,7 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 				"lorawan_phy_version",
 				"mac_settings",
 				"mac_state",
+				"pending_mac_state",
 				"pending_session",
 				"queued_application_downlinks",
 				"recent_downlinks",
