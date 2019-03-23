@@ -885,7 +885,7 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 			logger.WithField("start_at", nextDownlinkAt).Debug("Adding downlink task...")
 			if err := ns.downlinkTasks.Add(ctx, devID, nextDownlinkAt, true); err != nil {
 				addErr = true
-				logger.WithError(err).Error("Failed to add device to downlink schedule")
+				logger.WithError(err).Error("Failed to add downlink task after downlink")
 				return err
 			}
 		}
