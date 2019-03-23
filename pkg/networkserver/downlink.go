@@ -511,13 +511,10 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 				}
 
 				// TODO: Fix the set paths(pending vs current)
-				var session *ttnpb.Session
 				var macState *ttnpb.MACState
-				if dev.PendingSession != nil {
-					session = dev.PendingSession
+				if dev.PendingMACState != nil {
 					macState = dev.PendingMACState
 				} else {
-					session = dev.Session
 					macState = dev.MACState
 				}
 				switch {
@@ -641,7 +638,7 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 						if req.Rx2DataRateIndex < minDR {
 							minDR = req.Rx2DataRateIndex
 						}
-						genDown, err := ns.generateDownlink(ctx, dev, macState, session,
+						genDown, err := ns.generateDownlink(ctx, dev, macState, dev.Session,
 							band.DataRates[minDR].DefaultMaxSize.PayloadSize(fp.DwellTime.GetDownlinks()),
 							maxUpLength,
 						)
@@ -696,6 +693,12 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 						// we need to create a deep copy for the first call.
 						devCopy := deepcopy.Copy(dev).(*ttnpb.EndDevice)
 
+						var session *ttnpb.Session
+						if dev.PendingSession != nil {
+							session = dev.PendingSession
+						} else {
+							session = dev.Session
+						}
 						genDown, err := ns.generateDownlink(ctx, dev, macState, session,
 							band.DataRates[req.Rx1DataRateIndex].DefaultMaxSize.PayloadSize(fp.DwellTime.GetDownlinks()),
 							maxUpLength,
@@ -801,6 +804,12 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 						Rx2Frequency:     macState.CurrentParameters.Rx2Frequency,
 					}
 
+					var session *ttnpb.Session
+					if dev.PendingSession != nil {
+						session = dev.PendingSession
+					} else {
+						session = dev.Session
+					}
 					genDown, err := ns.generateDownlink(ctx, dev, macState, session,
 						band.DataRates[req.Rx2DataRateIndex].DefaultMaxSize.PayloadSize(fp.DwellTime.GetDownlinks()),
 						maxUpLength,
