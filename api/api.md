@@ -1890,7 +1890,6 @@ This is used internally by the Network Server and is read only.
 | queued_responses | [MACCommand](#ttn.lorawan.v3.MACCommand) | repeated | Queued MAC responses. Regenerated on each uplink. |
 | pending_requests | [MACCommand](#ttn.lorawan.v3.MACCommand) | repeated | Pending MAC requests(i.e. sent requests, for which no response has been received yet). Regenerated on each downlink. |
 | queued_join_accept | [MACState.JoinAccept](#ttn.lorawan.v3.MACState.JoinAccept) |  | Queued join-accept. Set each time a (re-)join request accept is received from Join Server and removed each time a downlink is scheduled. |
-| pending_join_request | [JoinRequest](#ttn.lorawan.v3.JoinRequest) |  | Pending join request. Set each time a join accept is scheduled and removed each time an uplink is received from the device. |
 | rx_windows_available | [bool](#bool) |  | Whether or not Rx windows are expected to be open. Set to true every time an uplink is received. Set to false every time a successful downlink scheduling attempt is made. |
 
 

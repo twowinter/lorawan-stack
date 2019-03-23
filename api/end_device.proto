@@ -299,13 +299,10 @@ message MACState {
   // Queued join-accept.
   // Set each time a (re-)join request accept is received from Join Server and removed each time a downlink is scheduled.
   JoinAccept queued_join_accept = 11;
-  // Pending join request.
-  // Set each time a join accept is scheduled and removed each time an uplink is received from the device.
-  JoinRequest pending_join_request = 12;
   // Whether or not Rx windows are expected to be open.
   // Set to true every time an uplink is received.
   // Set to false every time a successful downlink scheduling attempt is made.
-  bool rx_windows_available = 13;
+  bool rx_windows_available = 12;
 }
 
 // Power state of the device.

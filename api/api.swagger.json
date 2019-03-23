@@ -7620,10 +7620,6 @@
           "$ref": "#/definitions/MACStateJoinAccept",
           "description": "Queued join-accept.\nSet each time a (re-)join request accept is received from Join Server and removed each time a downlink is scheduled."
         },
-        "pending_join_request": {
-          "$ref": "#/definitions/v3JoinRequest",
-          "description": "Pending join request.\nSet each time a join accept is scheduled and removed each time an uplink is received from the device."
-        },
         "rx_windows_available": {
           "type": "boolean",
           "format": "boolean",

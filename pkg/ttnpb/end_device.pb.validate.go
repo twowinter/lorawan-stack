@@ -1295,18 +1295,6 @@ func (m *MACState) ValidateFields(paths ...string) error {
 				}
 			}
 
-		case "pending_join_request":
-
-			if v, ok := interface{}(m.GetPendingJoinRequest()).(interface{ ValidateFields(...string) error }); ok {
-				if err := v.ValidateFields(subs...); err != nil {
-					return MACStateValidationError{
-						field:  "pending_join_request",
-						reason: "embedded message failed validation",
-						cause:  err,
-					}
-				}
-			}
-
 		case "rx_windows_available":
 			// no validation rules for RxWindowsAvailable
 		default:

@@ -1040,27 +1040,6 @@ func (dst *MACState) SetFields(src *MACState, paths ...string) error {
 					dst.QueuedJoinAccept = nil
 				}
 			}
-		case "pending_join_request":
-			if len(subs) > 0 {
-				newDst := dst.PendingJoinRequest
-				if newDst == nil {
-					newDst = &JoinRequest{}
-					dst.PendingJoinRequest = newDst
-				}
-				var newSrc *JoinRequest
-				if src != nil {
-					newSrc = src.PendingJoinRequest
-				}
-				if err := newDst.SetFields(newSrc, subs...); err != nil {
-					return err
-				}
-			} else {
-				if src != nil {
-					dst.PendingJoinRequest = src.PendingJoinRequest
-				} else {
-					dst.PendingJoinRequest = nil
-				}
-			}
 		case "rx_windows_available":
 			if len(subs) > 0 {
 				return fmt.Errorf("'rx_windows_available' has no subfields, but %s were specified", subs)
