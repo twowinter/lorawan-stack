@@ -78,6 +78,15 @@ func (em Emission) AfterWithOffAir(other Emission, toa frequencyplans.TimeOffAir
 	return time.Duration(em.Starts() - other.EndsWithOffAir(toa))
 }
 
+// OverlapsWithOffAir returns whether the given emission overlaps with this emission, considering time-off-air.
+func (em Emission) OverlapsWithOffAir(other Emission, toa frequencyplans.TimeOffAir) bool {
+	emBegins, emEnds := em.Starts(), em.EndsWithOffAir(toa)
+	otherBegins, otherEnds := other.Starts(), other.EndsWithOffAir(toa)
+	return emBegins <= otherBegins && emEnds > otherBegins ||
+		emBegins < otherEnds && emEnds > otherEnds ||
+		otherBegins <= emBegins && otherEnds > emEnds
+}
+
 // Emissions is an list of emissions.
 type Emissions []Emission
 
