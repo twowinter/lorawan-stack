@@ -622,7 +622,6 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 							}
 							return dev, []string{
 								"ids.dev_addr",
-								"mac_state.pending_join_request",
 								"mac_state.queued_join_accept",
 								"mac_state.rx_windows_available",
 								"pending_session",
