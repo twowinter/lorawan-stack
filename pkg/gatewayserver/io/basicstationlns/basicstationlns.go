@@ -71,9 +71,9 @@ func New(ctx context.Context, server io.Server) web.Registerer {
 }
 
 func (s *srv) RegisterRoutes(server *web.Server) {
-	// group := server.Group(ttnpb.HTTPAPIPrefix + "/gs/io/basicstation")
-	// group.GET("/discover", s.handleDiscover)
-	// group.GET("/traffic/:uid", s.handleTraffic)
+	group := server.Group(ttnpb.HTTPAPIPrefix + "/gs/io/basicstation")
+	group.GET("/discover", s.handleDiscover)
+	group.GET("/traffic/:uid", s.handleTraffic)
 }
 
 func (s *srv) handleDiscover(c echo.Context) error {
@@ -298,7 +298,7 @@ func (s *srv) handleTraffic(c echo.Context) error {
 				return err
 			}
 			if value, ok := s.correlations.Load(txConf.Diid); ok {
-				txAck := txConf.ToTxAcknowledgment(value.(downlinkInfo).correlationIDs)
+				txAck := messages.ToTxAcknowledgment(value.(downlinkInfo).correlationIDs)
 				if err := conn.HandleTxAck(&txAck); err != nil {
 					logger.WithError(err).Warn("Failed to handle uplink message")
 				}
