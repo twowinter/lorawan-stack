@@ -35,6 +35,8 @@ import (
 	"go.thethings.network/lorawan-stack/pkg/web"
 )
 
+const tokenExpiration = 15 * time.Second
+
 var (
 	errEmptyGatewayEUI           = errors.Define("empty_gateway_eui", "empty gateway EUI")
 	errMessageTypeNotImplemented = errors.DefineUnimplemented("message_type_not_implemented", "message of type `{type}` is not implemented")
@@ -67,6 +69,7 @@ func New(ctx context.Context, server io.Server) web.Registerer {
 		server:   server,
 		upgrader: &websocket.Upgrader{},
 	}
+	go s.gc()
 	return s
 }
 
@@ -338,7 +341,21 @@ func (s *srv) createNextToken() {
 	atomic.AddInt64(&s.token, 1)
 }
 
-// gc is a garbage collector that removes old tokens from the correlations map.
+// gc is the garbage collector that removes old items from the correlations map.
 func (s *srv) gc() {
-	//s.correlations.Delete()
+	gcTicker := time.NewTicker(tokenExpiration)
+	for {
+		select {
+		case <-s.ctx.Done():
+			gcTicker.Stop()
+			return
+		case <-gcTicker.C:
+			s.correlations.Range(func(key interface{}, value interface{}) bool {
+				if value.(downlinkInfo).txTime.Before(time.Now().Add(-tokenExpiration)) {
+					s.correlations.Delete(key)
+				}
+				return true
+			})
+		}
+	}
 }
