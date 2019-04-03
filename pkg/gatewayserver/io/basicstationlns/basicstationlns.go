@@ -35,7 +35,7 @@ import (
 	"go.thethings.network/lorawan-stack/pkg/web"
 )
 
-const tokenExpiration = 15 * time.Second
+const tokenExpiration = 3 * time.Minute
 
 var (
 	errEmptyGatewayEUI           = errors.Define("empty_gateway_eui", "empty gateway EUI")
@@ -201,13 +201,14 @@ func (s *srv) handleTraffic(c echo.Context) error {
 				return
 			case down := <-conn.Down():
 				s.createNextToken()
+
+				dnmsg := messages.DownlinkMessage{}
+				dnmsg.FromNSDownlinkMessage(ids, *down, s.token)
 				s.correlations.Store(s.token, downlinkInfo{
 					correlationIDs: down.GetCorrelationIDs(),
 					txTime:         time.Now(),
 				})
 
-				dnmsg := messages.DownlinkMessage{}
-				dnmsg.FromNSDownlinkMessage(ids, *down, s.token)
 				msg, err := dnmsg.MarshalJSON()
 				if err != nil {
 					logger.WithError(err).Error("Failed to marshal downlink message")

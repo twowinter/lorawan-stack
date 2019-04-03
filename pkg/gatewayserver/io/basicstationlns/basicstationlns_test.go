@@ -679,6 +679,7 @@ func TestTraffic(t *testing.T) {
 				Rx2Freq:     868100000,
 				Rx2DR:       5,
 				XTime:       1553759666,
+				Priority:    25,
 			},
 			nil,
 			&ttnpb.DownlinkMessage{
