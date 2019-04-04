@@ -42,7 +42,7 @@ var (
 	errMessageTypeNotImplemented = errors.DefineUnimplemented("message_type_not_implemented", "message of type `{type}` is not implemented")
 )
 
-// downlinkInfo is the information associated with a particular downlink
+// downlinkInfo is the information associated with a particular downlink.
 type downlinkInfo struct {
 	correlationIDs []string
 	txTime         time.Time
@@ -276,7 +276,7 @@ func (s *srv) handleTraffic(c echo.Context) error {
 				logger.WithError(err).Debug("Failed to parse join-request message")
 				return err
 			}
-			if err := conn.HandleUp(&up); err != nil {
+			if err := conn.HandleUp(up); err != nil {
 				logger.WithError(err).Warn("Failed to handle uplink message")
 			}
 
@@ -291,14 +291,14 @@ func (s *srv) handleTraffic(c echo.Context) error {
 				logger.WithError(err).Debug("Failed to parse uplink data frame")
 				return err
 			}
-			if err := conn.HandleUp(&up); err != nil {
+			if err := conn.HandleUp(up); err != nil {
 				logger.WithError(err).Warn("Failed to handle uplink message")
 			}
 
 		case messages.TypeUpstreamTxConfirmation:
 			var txConf messages.TxConfirmation
 			if err := json.Unmarshal(data, &txConf); err != nil {
-				logger.WithError(err).Debug("Failed to unmarshal tx acknowledgement frame")
+				logger.WithError(err).Debug("Failed to unmarshal Tx acknowledgement frame")
 				return err
 			}
 			if value, ok := s.correlations.Load(txConf.Diid); ok {

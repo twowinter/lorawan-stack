@@ -119,19 +119,18 @@ func (conf TxConfirmation) MarshalJSON() ([]byte, error) {
 }
 
 // ToUplinkMessage extracts fields from the basic station Join Request "jreq" message and converts them into an UplinkMessage for the network server.
-func (req *JoinRequest) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandID string) (ttnpb.UplinkMessage, error) {
-	up := ttnpb.UplinkMessage{}
+func (req *JoinRequest) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandID string) (*ttnpb.UplinkMessage, error) {
+	var up ttnpb.UplinkMessage
 	up.ReceivedAt = time.Now()
 
-	parsedMHDR := ttnpb.MHDR{}
-	err := lorawan.UnmarshalMHDR([]byte{byte(req.MHdr)}, &parsedMHDR)
-	if err != nil {
-		return ttnpb.UplinkMessage{}, errJoinRequestMessage.WithCause(err)
+	var parsedMHDR ttnpb.MHDR
+	if err := lorawan.UnmarshalMHDR([]byte{byte(req.MHdr)}, &parsedMHDR); err != nil {
+		return nil, errJoinRequestMessage.WithCause(err)
 	}
 
 	micBytes, err := getInt32AsByteSlice(req.MIC)
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errJoinRequestMessage.WithCause(err)
+		return nil, errJoinRequestMessage.WithCause(err)
 	}
 	up.Payload = &ttnpb.Message{
 		MHDR: parsedMHDR,
@@ -145,7 +144,7 @@ func (req *JoinRequest) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandID str
 
 	up.RawPayload, err = lorawan.MarshalMessage(*up.Payload)
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errJoinRequestMessage.WithCause(err)
+		return nil, errJoinRequestMessage.WithCause(err)
 	}
 
 	timestamp := uint32(req.RadioMetaData.UpInfo.XTime & 0xFFFFFFFF)
@@ -159,7 +158,7 @@ func (req *JoinRequest) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandID str
 	}
 	ulTokenBytes, err := ulToken.Marshal()
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errJoinRequestMessage.WithCause(err)
+		return nil, errJoinRequestMessage.WithCause(err)
 	}
 
 	rxTime := time.Unix(req.RadioMetaData.UpInfo.RxTime, 0)
@@ -175,34 +174,32 @@ func (req *JoinRequest) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandID str
 
 	loraDR, err := getDataRateFromIndex(bandID, req.RadioMetaData.DataRate)
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errJoinRequestMessage.WithCause(err)
+		return nil, errJoinRequestMessage.WithCause(err)
 	}
 	up.Settings = ttnpb.TxSettings{
-		Frequency:     req.RadioMetaData.Frequency,
-		DataRateIndex: ttnpb.DataRateIndex(req.RadioMetaData.DataRate),
-		DataRate:      loraDR,
+		Frequency: req.RadioMetaData.Frequency,
+		DataRate:  loraDR,
 	}
 
-	return up, nil
+	return &up, nil
 }
 
 // ToUplinkMessage extracts fields from the basic station Join Request "jreq" message and converts them into an UplinkMessage for the network server.
-func (updf *UplinkDataFrame) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandID string) (ttnpb.UplinkMessage, error) {
-	up := ttnpb.UplinkMessage{}
+func (updf *UplinkDataFrame) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandID string) (*ttnpb.UplinkMessage, error) {
+	var up ttnpb.UplinkMessage
 	up.ReceivedAt = time.Now()
 
-	parsedMHDR := ttnpb.MHDR{}
-	err := lorawan.UnmarshalMHDR([]byte{byte(updf.MHdr)}, &parsedMHDR)
-	if err != nil {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame.WithCause(err)
+	var parsedMHDR ttnpb.MHDR
+	if err := lorawan.UnmarshalMHDR([]byte{byte(updf.MHdr)}, &parsedMHDR); err != nil {
+		return nil, errUplinkDataFrame.WithCause(err)
 	}
-	if (parsedMHDR.MType != ttnpb.MType_UNCONFIRMED_UP) && (parsedMHDR.MType != ttnpb.MType_CONFIRMED_UP) {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame
+	if parsedMHDR.MType != ttnpb.MType_UNCONFIRMED_UP && parsedMHDR.MType != ttnpb.MType_CONFIRMED_UP {
+		return nil, errUplinkDataFrame
 	}
 
 	micBytes, err := getInt32AsByteSlice(updf.MIC)
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame.WithCause(err)
+		return nil, errUplinkDataFrame.WithCause(err)
 	}
 
 	var fport uint32
@@ -214,18 +211,16 @@ func (updf *UplinkDataFrame) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandI
 
 	devAddrBytes, err := getInt32AsByteSlice(updf.DevAddr)
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame.WithCause(err)
+		return nil, errUplinkDataFrame.WithCause(err)
 	}
-	devAddr := types.DevAddr{}
-	err = devAddr.UnmarshalBinary(devAddrBytes)
-	if err != nil {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame.WithCause(err)
+	var devAddr types.DevAddr
+	if err = devAddr.UnmarshalBinary(devAddrBytes); err != nil {
+		return nil, errUplinkDataFrame.WithCause(err)
 	}
 
-	fctrl := ttnpb.FCtrl{}
-	err = lorawan.UnmarshalFCtrl([]byte{byte(updf.FCtrl)}, &fctrl, true)
-	if err != nil {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame.WithCause(err)
+	var fctrl ttnpb.FCtrl
+	if err = lorawan.UnmarshalFCtrl([]byte{byte(updf.FCtrl)}, &fctrl, true); err != nil {
+		return nil, errUplinkDataFrame.WithCause(err)
 	}
 
 	up.Payload = &ttnpb.Message{
@@ -245,7 +240,7 @@ func (updf *UplinkDataFrame) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandI
 
 	up.RawPayload, err = lorawan.MarshalMessage(*up.Payload)
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame.WithCause(err)
+		return nil, errUplinkDataFrame.WithCause(err)
 	}
 
 	timestamp := uint32(updf.RadioMetaData.UpInfo.XTime & 0xFFFFFFFF)
@@ -259,7 +254,7 @@ func (updf *UplinkDataFrame) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandI
 	}
 	ulTokenBytes, err := ulToken.Marshal()
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errJoinRequestMessage.WithCause(err)
+		return nil, errJoinRequestMessage.WithCause(err)
 	}
 
 	rxTime := time.Unix(updf.RadioMetaData.UpInfo.RxTime, 0)
@@ -275,14 +270,13 @@ func (updf *UplinkDataFrame) ToUplinkMessage(ids ttnpb.GatewayIdentifiers, bandI
 
 	loraDR, err := getDataRateFromIndex(bandID, updf.RadioMetaData.DataRate)
 	if err != nil {
-		return ttnpb.UplinkMessage{}, errUplinkDataFrame.WithCause(err)
+		return nil, errUplinkDataFrame.WithCause(err)
 	}
 	up.Settings = ttnpb.TxSettings{
-		Frequency:     updf.RadioMetaData.Frequency,
-		DataRateIndex: ttnpb.DataRateIndex(updf.RadioMetaData.DataRate),
-		DataRate:      loraDR,
+		Frequency: updf.RadioMetaData.Frequency,
+		DataRate:  loraDR,
 	}
-	return up, nil
+	return &up, nil
 }
 
 // ToTxAcknowledgment extracts fields from the basic station TxConfirmation "dntxed" message and converts them into a TxAcknowledgment for the network server.
