@@ -56,7 +56,7 @@ func TestMarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			Expected: []byte("{\"msgtype\":\"jreq\",\"MHdr\":0,\"JoinEui\":\"2222:2222:2222:2222\",\"DevEui\":\"1111:1111:1111:1111\",\"DevNonce\":18000,\"MIC\":12345678,\"RefTime\":0,\"RadioMetaData\":{\"DR\":1,\"Freq\":868300000,\"upinfo\":{\"rxtime\":1548059982,\"rtcx\":0,\"xtime\":12666373963464220,\"gpstime\":0,\"rssi\":89,\"snr\":9.25}}}"),
+			Expected: []byte(`{"msgtype":"jreq","MHdr":0,"JoinEui":"2222:2222:2222:2222","DevEui":"1111:1111:1111:1111","DevNonce":18000,"MIC":12345678,"RefTime":0,"RadioMetaData":{"DR":1,"Freq":868300000,"upinfo":{"rxtime":1548059982,"rtcx":0,"xtime":12666373963464220,"gpstime":0,"rssi":89,"snr":9.25}}}`),
 		},
 		{
 			Name: "UplinkDataFrame",
@@ -80,7 +80,7 @@ func TestMarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			Expected: []byte("{\"msgtype\":\"updf\",\"MHdr\":64,\"DevAddr\":287454020,\"FCtrl\":48,\"Fcnt\":25,\"FOpts\":\"FD\",\"FPort\":0,\"FRMPayload\":\"Ymxhamthc25kJ3M=\",\"MIC\":12345678,\"RefTime\":0,\"RadioMetaData\":{\"DR\":1,\"Freq\":868300000,\"upinfo\":{\"rxtime\":1548059982,\"rtcx\":0,\"xtime\":12666373963464220,\"gpstime\":0,\"rssi\":89,\"snr\":9.25}}}"),
+			Expected: []byte(`{"msgtype":"updf","MHdr":64,"DevAddr":287454020,"FCtrl":48,"Fcnt":25,"FOpts":"FD","FPort":0,"FRMPayload":"Ymxhamthc25kJ3M=","MIC":12345678,"RefTime":0,"RadioMetaData":{"DR":1,"Freq":868300000,"upinfo":{"rxtime":1548059982,"rtcx":0,"xtime":12666373963464220,"gpstime":0,"rssi":89,"snr":9.25}}}`),
 		},
 		{
 			Name: "TxConfirmation",
@@ -91,7 +91,7 @@ func TestMarshalJSON(t *testing.T) {
 				TxTime:  1552906698,
 				GpsTime: 1552906698,
 			},
-			Expected: []byte("{\"msgtype\":\"dntxed\",\"diid\":35,\"DevEui\":\"1111:1111:1111:1111\",\"rctx\":0,\"xtime\":1552906698,\"txtime\":1552906698,\"gpstime\":1552906698}"),
+			Expected: []byte(`{"msgtype":"dntxed","diid":35,"DevEui":"1111:1111:1111:1111","rctx":0,"xtime":1552906698,"txtime":1552906698,"gpstime":1552906698}`),
 		},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
@@ -239,7 +239,7 @@ func TestJoinRequest(t *testing.T) {
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			a := assertions.New(t)
-			msg, err := tc.JoinRequest.ToUplinkMessage(tc.GatewayIDs, tc.BandID)
+			msg, err := tc.JoinRequest.ToUplinkMessage(tc.GatewayIDs, tc.BandID, time.Time{})
 			if err != nil {
 				if tc.ErrorAssertion == nil || !a.So(tc.ErrorAssertion(err), should.BeTrue) {
 					t.Fatalf("Unexpected error: %v", err)
@@ -247,7 +247,6 @@ func TestJoinRequest(t *testing.T) {
 			} else if tc.ErrorAssertion != nil {
 				t.Fatalf("Expected error")
 			} else {
-				msg.ReceivedAt = time.Time{}
 				var payload ttnpb.Message
 				a.So(lorawan.UnmarshalMessage(msg.RawPayload, &payload), should.BeNil)
 				if !a.So(&payload, should.Resemble, msg.Payload) {
@@ -402,7 +401,7 @@ func TestUplinkDataFrame(t *testing.T) {
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			a := assertions.New(t)
-			msg, err := tc.UplinkDataFrame.ToUplinkMessage(tc.GatewayIDs, tc.FrequencyPlanID)
+			msg, err := tc.UplinkDataFrame.ToUplinkMessage(tc.GatewayIDs, tc.FrequencyPlanID, time.Time{})
 			if err != nil {
 				if tc.ErrorAssertion == nil || !a.So(tc.ErrorAssertion(err), should.BeTrue) {
 					t.Fatalf("Unexpected error: %v", err)
@@ -410,7 +409,6 @@ func TestUplinkDataFrame(t *testing.T) {
 			} else if tc.ErrorAssertion != nil {
 				t.Fatalf("Expected error")
 			} else {
-				msg.ReceivedAt = time.Time{}
 				msg.RawPayload = nil
 				if !a.So(*msg, should.Resemble, tc.ExpectedUplinkMessage) {
 					t.Fatalf("Invalid UplinkMessage: %s", msg.RawPayload)

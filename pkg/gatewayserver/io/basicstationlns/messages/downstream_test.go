@@ -19,14 +19,11 @@ import (
 	"time"
 
 	"github.com/smartystreets/assertions"
-	"go.thethings.network/lorawan-stack/pkg/basicstation"
 	"go.thethings.network/lorawan-stack/pkg/ttnpb"
-	"go.thethings.network/lorawan-stack/pkg/types"
 	"go.thethings.network/lorawan-stack/pkg/util/test/assertions/should"
 )
 
-func eui64Ptr(eui types.EUI64) *types.EUI64 { return &eui }
-func timePtr(time time.Time) *time.Time     { return &time }
+func timePtr(time time.Time) *time.Time { return &time }
 func TestDownlinkMessage(t *testing.T) {
 	for _, tc := range []struct {
 		Name                    string
@@ -40,7 +37,6 @@ func TestDownlinkMessage(t *testing.T) {
 				RawPayload: []byte("Ymxhamthc25kJ3M=="),
 				EndDeviceIDs: &ttnpb.EndDeviceIdentifiers{
 					DeviceID: "testdevice",
-					DevEUI:   eui64Ptr(types.EUI64{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11}),
 				},
 				Settings: &ttnpb.DownlinkMessage_Scheduled{
 					Scheduled: &ttnpb.TxSettings{
@@ -55,7 +51,6 @@ func TestDownlinkMessage(t *testing.T) {
 			},
 			GatewayIDs: ttnpb.GatewayIdentifiers{GatewayID: "test-gateway"},
 			ExpectedDownlinkMessage: DownlinkMessage{
-				DevEUI:      basicstation.EUI{EUI64: types.EUI64{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11}},
 				DeviceClass: 0,
 				Pdu:         "Ymxhamthc25kJ3M==",
 				RxDelay:     1,
@@ -63,7 +58,7 @@ func TestDownlinkMessage(t *testing.T) {
 				Rx2Freq:     868500000,
 				RCtx:        2,
 				Priority:    25,
-				XTime:       1554300667,
+				XTime:       1554300785,
 			},
 		},
 		{
@@ -72,7 +67,6 @@ func TestDownlinkMessage(t *testing.T) {
 				RawPayload: []byte("Ymxhamthc25kJ3M=="),
 				EndDeviceIDs: &ttnpb.EndDeviceIdentifiers{
 					DeviceID: "testdevice",
-					DevEUI:   eui64Ptr(types.EUI64{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11}),
 				},
 				Settings: &ttnpb.DownlinkMessage_Scheduled{
 					Scheduled: &ttnpb.TxSettings{
@@ -87,7 +81,6 @@ func TestDownlinkMessage(t *testing.T) {
 			},
 			GatewayIDs: ttnpb.GatewayIdentifiers{GatewayID: "test-gateway"},
 			ExpectedDownlinkMessage: DownlinkMessage{
-				DevEUI:      basicstation.EUI{EUI64: types.EUI64{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11}},
 				DeviceClass: 1,
 				Pdu:         "Ymxhamthc25kJ3M==",
 				RxDelay:     1,
@@ -102,7 +95,7 @@ func TestDownlinkMessage(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			a := assertions.New(t)
 			dnmsg := DownlinkMessage{}
-			dnmsg.FromNSDownlinkMessage(tc.GatewayIDs, tc.NSDownlinkMessage, 0)
+			dnmsg.FromDownlinkMessage(tc.GatewayIDs, tc.NSDownlinkMessage, 0)
 			if !a.So(dnmsg, should.Resemble, tc.ExpectedDownlinkMessage) {
 				t.Fatalf("Invalid DownlinkMessage: %v", dnmsg)
 			}
