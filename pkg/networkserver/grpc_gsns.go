@@ -553,10 +553,7 @@ func (ns *NetworkServer) handleUplink(ctx context.Context, up *ttnpb.UplinkMessa
 			}
 			up.Settings.DataRateIndex = upDRIdx
 
-			stored.RecentUplinks = append(stored.RecentUplinks, up)
-			if len(stored.RecentUplinks) > recentUplinkCount {
-				stored.RecentUplinks = stored.RecentUplinks[len(stored.RecentUplinks)-recentUplinkCount+1:]
-			}
+			stored.RecentUplinks = appendRecentUplink(stored.RecentUplinks, up, recentUplinkCount)
 			paths = append(paths, "recent_uplinks")
 
 			stored.MACState.QueuedResponses = stored.MACState.QueuedResponses[:0]
@@ -664,11 +661,7 @@ func (ns *NetworkServer) handleUplink(ctx context.Context, up *ttnpb.UplinkMessa
 				stored.RecentADRUplinks = nil
 				return stored, paths, nil
 			}
-
-			stored.RecentADRUplinks = append(stored.RecentADRUplinks, up)
-			if len(stored.RecentADRUplinks) > optimalADRUplinkCount {
-				stored.RecentADRUplinks = append(stored.RecentADRUplinks[:0], stored.RecentADRUplinks[len(stored.RecentADRUplinks)-recentUplinkCount:]...)
-			}
+			stored.RecentADRUplinks = appendRecentUplink(stored.RecentADRUplinks, up, optimalADRUplinkCount)
 
 			useADR := true
 			if stored.MACSettings.GetUseADR() != nil {
