@@ -537,6 +537,8 @@ func (ns *NetworkServer) handleUplink(ctx context.Context, up *ttnpb.UplinkMessa
 			paths = append(paths,
 				"mac_state",
 				"pending_mac_state",
+				"pending_session",
+				"session",
 			)
 
 			upChIdx, err := searchUplinkChannel(up.Settings.Frequency, stored.MACState)
@@ -645,18 +647,14 @@ func (ns *NetworkServer) handleUplink(ctx context.Context, up *ttnpb.UplinkMessa
 			if pending {
 				if stored.MACState.LoRaWANVersion.Compare(ttnpb.MAC_V1_1) < 0 {
 					stored.Session = stored.PendingSession
-					stored.PendingSession = nil
 					stored.EndDeviceIdentifiers.DevAddr = &pld.DevAddr
 				} else if stored.PendingSession != nil {
 					handleErr = true
 					return nil, nil, errNoRekey
 				}
+				paths = append(paths, "ids.dev_addr")
 			}
 			stored.PendingSession = nil
-			paths = append(paths,
-				"pending_session",
-				"session",
-			)
 			stored.MACState.PendingApplicationDownlink = nil
 			stored.MACState.PendingJoinRequest = nil
 			stored.MACState.RxWindowsAvailable = true
