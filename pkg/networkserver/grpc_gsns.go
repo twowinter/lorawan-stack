@@ -645,6 +645,9 @@ func (ns *NetworkServer) handleUplink(ctx context.Context, up *ttnpb.UplinkMessa
 				}
 				paths = append(paths, "ids.dev_addr")
 			}
+			if !matched.Pending && stored.PendingSession != nil {
+				// TODO: Notify AS of session recovery(https://github.com/TheThingsNetwork/lorawan-stack/issues/594)
+			}
 			stored.PendingSession = nil
 			stored.MACState.PendingApplicationDownlink = nil
 			stored.MACState.PendingJoinRequest = nil
