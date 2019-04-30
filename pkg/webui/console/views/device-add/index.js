@@ -254,7 +254,9 @@ export default class DeviceAdd extends Component {
                   resets_join_nonces: false,
                   root_keys: {},
                   session: {},
-                  mac_settings: {},
+                  mac_settings: {
+                    resets_f_cnt: false,
+                  },
                 }
               }
               mapErrorsToFields={{
