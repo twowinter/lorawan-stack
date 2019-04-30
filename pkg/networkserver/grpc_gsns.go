@@ -885,10 +885,7 @@ func (ns *NetworkServer) handleJoin(ctx context.Context, up *ttnpb.UplinkMessage
 			}
 			up.Settings.DataRateIndex = upDRIdx
 
-			stored.RecentUplinks = append(stored.RecentUplinks, up)
-			if len(stored.RecentUplinks) > recentUplinkCount {
-				stored.RecentUplinks = append(stored.RecentUplinks[:0], stored.RecentUplinks[len(stored.RecentUplinks)-recentUplinkCount:]...)
-			}
+			stored.RecentUplinks = appendRecentUplink(stored.RecentUplinks, up, recentUplinkCount)
 			paths = append(paths, "recent_uplinks")
 
 			invalidatedQueue = stored.QueuedApplicationDownlinks
