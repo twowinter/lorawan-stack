@@ -27,9 +27,11 @@ import FieldGroup from '../../../components/field/group'
 import Message from '../../../lib/components/message'
 import IntlHelmet from '../../../lib/components/intl-helmet'
 import SubmitBar from '../../../components/submit-bar'
+import toast from '../../../components/toast'
 
 import api from '../../api'
 import sharedMessages from '../../../lib/shared-messages'
+import { get as cacheGet, set as cacheSet } from '../../lib/cache'
 import m from './messages'
 import validationSchema from './validation-schema'
 import style from './device-add.styl'
@@ -52,16 +54,30 @@ export default class DeviceAdd extends Component {
     otaa: true,
     resets_join_nonces: false,
     resets_f_cnt: false,
+    frequencyPlanOptions: [],
+  }
+
+  async componentDidMount () {
+    let frequencyPlans = cacheGet('frequency_plans')
+    try {
+      if (!frequencyPlans) {
+        frequencyPlans = (await api.configuration.listNsFrequencyPlans()).frequency_plans
+        cacheSet('frequency_plans', frequencyPlans)
+      }
+      const frequencyPlanOptions = frequencyPlans.map(e => ({ value: e.id, label: e.name }))
+      this.setState({ frequencyPlanOptions })
+    } catch (e) {
+      toast({
+        message: m.couldNotRetrieveFrequencyPlans,
+        type: toast.types.ERROR,
+      })
+    }
   }
 
   async handleSubmit (values, { setSubmitting, resetForm }) {
     const { match, dispatch } = this.props
     const { appId } = match.params
-
-    const device = {
-      ...values,
-      frequency_plan_id: 'EU_863_870',
-    }
+    const device = Object.assign({}, values)
 
     // Clean values based on activation mode
     if (device.activation_mode === 'otaa') {
@@ -225,7 +241,7 @@ export default class DeviceAdd extends Component {
   }
 
   render () {
-    const { error, otaa } = this.state
+    const { error, otaa, frequencyPlanOptions } = this.state
 
     return (
       <Container>
@@ -251,6 +267,7 @@ export default class DeviceAdd extends Component {
                   activation_mode: 'otaa',
                   lorawan_version: undefined,
                   lorawan_phy_version: undefined,
+                  frequency_plan_id: undefined,
                   resets_join_nonces: false,
                   root_keys: {},
                   session: {},
@@ -318,6 +335,13 @@ export default class DeviceAdd extends Component {
                   { value: 'PHY_V1_1_REV_A', label: 'PHY V1.1 REV A' },
                   { value: 'PHY_V1_1_REV_B', label: 'PHY V1.1 REV B' },
                 ]}
+              />
+              <Field
+                title={sharedMessages.frequencyPlan}
+                name="frequency_plan_id"
+                type="select"
+                required
+                options={frequencyPlanOptions}
               />
               <Field
                 title={m.supportsClassC}
