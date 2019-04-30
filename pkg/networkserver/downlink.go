@@ -724,6 +724,7 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 					return dev, nil, nil
 				}
 
+				logger = logger.WithField("device_class", dev.MACState.DeviceClass)
 				maxUpLength := maximumUplinkLength(fp, phy, dev.RecentUplinks...)
 
 				if dev.MACState.RxWindowsAvailable {
