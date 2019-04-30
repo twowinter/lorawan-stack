@@ -512,11 +512,7 @@ func (ns *NetworkServer) scheduleDownlinkByPaths(ctx context.Context, req *ttnpb
 	return nil, time.Time{}, errSchedule
 }
 
-type withFielder interface {
-	WithFields(log.Fielder) log.Interface
-}
-
-func loggerWithTxRequestFields(logger withFielder, req *ttnpb.TxRequest, rx1, rx2 bool) log.Interface {
+func loggerWithTxRequestFields(logger log.Interface, req *ttnpb.TxRequest, rx1, rx2 bool) log.Interface {
 	pairs := []interface{}{
 		"attempt_rx1", rx1,
 		"attempt_rx2", rx2,
