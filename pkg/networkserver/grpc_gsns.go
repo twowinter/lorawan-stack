@@ -93,7 +93,7 @@ type matchedDevice struct {
 	MACState *ttnpb.MACState
 }
 
-// matchDevice tries to match the uplink message with a device and returns the matched device and session.
+// matchDevice tries to match the uplink message with a device and returns the matched device.
 // The LastFCntUp in the matched session is updated according to the FCnt in up.
 func (ns *NetworkServer) matchDevice(ctx context.Context, up *ttnpb.UplinkMessage) (*matchedDevice, error) {
 	if len(up.RawPayload) < 4 {
