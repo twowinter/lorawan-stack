@@ -737,7 +737,7 @@ func (ns *NetworkServer) processDownlinkTask(ctx context.Context) error {
 					default:
 						return nil, nil, errUplinkNotFound
 					}
-					ctx := events.ContextWithCorrelationID(ctx, up.CorrelationIDs...)
+					ctx = events.ContextWithCorrelationID(ctx, up.CorrelationIDs...)
 
 					switch {
 					case dev.MACState.DeviceClass == ttnpb.CLASS_A:
