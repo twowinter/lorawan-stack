@@ -11,6 +11,7 @@
   - [Message `Applications`](#ttn.lorawan.v3.Applications)
   - [Message `CreateApplicationAPIKeyRequest`](#ttn.lorawan.v3.CreateApplicationAPIKeyRequest)
   - [Message `CreateApplicationRequest`](#ttn.lorawan.v3.CreateApplicationRequest)
+  - [Message `GetApplicationAPIKeyRequest`](#ttn.lorawan.v3.GetApplicationAPIKeyRequest)
   - [Message `GetApplicationRequest`](#ttn.lorawan.v3.GetApplicationRequest)
   - [Message `ListApplicationAPIKeysRequest`](#ttn.lorawan.v3.ListApplicationAPIKeysRequest)
   - [Message `ListApplicationCollaboratorsRequest`](#ttn.lorawan.v3.ListApplicationCollaboratorsRequest)
@@ -116,6 +117,7 @@
   - [Message `GatewayAntenna.AttributesEntry`](#ttn.lorawan.v3.GatewayAntenna.AttributesEntry)
   - [Message `GatewayBrand`](#ttn.lorawan.v3.GatewayBrand)
   - [Message `GatewayConnectionStats`](#ttn.lorawan.v3.GatewayConnectionStats)
+  - [Message `GatewayConnectionStats.RoundTripTimes`](#ttn.lorawan.v3.GatewayConnectionStats.RoundTripTimes)
   - [Message `GatewayModel`](#ttn.lorawan.v3.GatewayModel)
   - [Message `GatewayRadio`](#ttn.lorawan.v3.GatewayRadio)
   - [Message `GatewayRadio.TxConfiguration`](#ttn.lorawan.v3.GatewayRadio.TxConfiguration)
@@ -125,6 +127,7 @@
   - [Message `GatewayVersion`](#ttn.lorawan.v3.GatewayVersion)
   - [Message `GatewayVersionIdentifiers`](#ttn.lorawan.v3.GatewayVersionIdentifiers)
   - [Message `Gateways`](#ttn.lorawan.v3.Gateways)
+  - [Message `GetGatewayAPIKeyRequest`](#ttn.lorawan.v3.GetGatewayAPIKeyRequest)
   - [Message `GetGatewayIdentifiersForEUIRequest`](#ttn.lorawan.v3.GetGatewayIdentifiersForEUIRequest)
   - [Message `GetGatewayRequest`](#ttn.lorawan.v3.GetGatewayRequest)
   - [Message `ListGatewayAPIKeysRequest`](#ttn.lorawan.v3.ListGatewayAPIKeysRequest)
@@ -272,10 +275,12 @@
   - [Message `ApplicationUp`](#ttn.lorawan.v3.ApplicationUp)
   - [Message `ApplicationUplink`](#ttn.lorawan.v3.ApplicationUplink)
   - [Message `DownlinkMessage`](#ttn.lorawan.v3.DownlinkMessage)
+  - [Message `DownlinkQueueOperation`](#ttn.lorawan.v3.DownlinkQueueOperation)
   - [Message `DownlinkQueueRequest`](#ttn.lorawan.v3.DownlinkQueueRequest)
   - [Message `MessagePayloadFormatters`](#ttn.lorawan.v3.MessagePayloadFormatters)
   - [Message `TxAcknowledgment`](#ttn.lorawan.v3.TxAcknowledgment)
   - [Message `UplinkMessage`](#ttn.lorawan.v3.UplinkMessage)
+  - [Enum `DownlinkQueueOperation.Operation`](#ttn.lorawan.v3.DownlinkQueueOperation.Operation)
   - [Enum `PayloadFormatter`](#ttn.lorawan.v3.PayloadFormatter)
   - [Enum `TxAcknowledgment.Result`](#ttn.lorawan.v3.TxAcknowledgment.Result)
 - [File `lorawan-stack/api/metadata.proto`](#lorawan-stack/api/metadata.proto)
@@ -283,8 +288,10 @@
   - [Message `RxMetadata`](#ttn.lorawan.v3.RxMetadata)
   - [Enum `LocationSource`](#ttn.lorawan.v3.LocationSource)
 - [File `lorawan-stack/api/networkserver.proto`](#lorawan-stack/api/networkserver.proto)
+  - [Message `GenerateDevAddrResponse`](#ttn.lorawan.v3.GenerateDevAddrResponse)
   - [Service `AsNs`](#ttn.lorawan.v3.AsNs)
   - [Service `GsNs`](#ttn.lorawan.v3.GsNs)
+  - [Service `Ns`](#ttn.lorawan.v3.Ns)
   - [Service `NsEndDeviceRegistry`](#ttn.lorawan.v3.NsEndDeviceRegistry)
 - [File `lorawan-stack/api/oauth.proto`](#lorawan-stack/api/oauth.proto)
   - [Message `ListOAuthAccessTokensRequest`](#ttn.lorawan.v3.ListOAuthAccessTokensRequest)
@@ -301,6 +308,7 @@
 - [File `lorawan-stack/api/organization.proto`](#lorawan-stack/api/organization.proto)
   - [Message `CreateOrganizationAPIKeyRequest`](#ttn.lorawan.v3.CreateOrganizationAPIKeyRequest)
   - [Message `CreateOrganizationRequest`](#ttn.lorawan.v3.CreateOrganizationRequest)
+  - [Message `GetOrganizationAPIKeyRequest`](#ttn.lorawan.v3.GetOrganizationAPIKeyRequest)
   - [Message `GetOrganizationRequest`](#ttn.lorawan.v3.GetOrganizationRequest)
   - [Message `ListOrganizationAPIKeysRequest`](#ttn.lorawan.v3.ListOrganizationAPIKeysRequest)
   - [Message `ListOrganizationCollaboratorsRequest`](#ttn.lorawan.v3.ListOrganizationCollaboratorsRequest)
@@ -339,6 +347,7 @@
   - [Message `CreateUserAPIKeyRequest`](#ttn.lorawan.v3.CreateUserAPIKeyRequest)
   - [Message `CreateUserRequest`](#ttn.lorawan.v3.CreateUserRequest)
   - [Message `DeleteInvitationRequest`](#ttn.lorawan.v3.DeleteInvitationRequest)
+  - [Message `GetUserAPIKeyRequest`](#ttn.lorawan.v3.GetUserAPIKeyRequest)
   - [Message `GetUserRequest`](#ttn.lorawan.v3.GetUserRequest)
   - [Message `Invitation`](#ttn.lorawan.v3.Invitation)
   - [Message `Invitations`](#ttn.lorawan.v3.Invitations)
@@ -434,6 +443,19 @@ Application is the message that defines an Application in the network.
 | ----- | ----------- |
 | `application` | <p>`message.required`: `true`</p> |
 | `collaborator` | <p>`message.required`: `true`</p> |
+
+### <a name="ttn.lorawan.v3.GetApplicationAPIKeyRequest">Message `GetApplicationAPIKeyRequest`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `application_ids` | [`ApplicationIdentifiers`](#ttn.lorawan.v3.ApplicationIdentifiers) |  |  |
+| `key_id` | [`string`](#string) |  | Unique public identifier for the API key. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `application_ids` | <p>`message.required`: `true`</p> |
 
 ### <a name="ttn.lorawan.v3.GetApplicationRequest">Message `GetApplicationRequest`</a>
 
@@ -548,6 +570,7 @@ where the user or organization is collaborator on.
 | `ListRights` | [`ApplicationIdentifiers`](#ttn.lorawan.v3.ApplicationIdentifiers) | [`Rights`](#ttn.lorawan.v3.Rights) |  |
 | `CreateAPIKey` | [`CreateApplicationAPIKeyRequest`](#ttn.lorawan.v3.CreateApplicationAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `ListAPIKeys` | [`ListApplicationAPIKeysRequest`](#ttn.lorawan.v3.ListApplicationAPIKeysRequest) | [`APIKeys`](#ttn.lorawan.v3.APIKeys) |  |
+| `GetAPIKey` | [`GetApplicationAPIKeyRequest`](#ttn.lorawan.v3.GetApplicationAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `UpdateAPIKey` | [`UpdateApplicationAPIKeyRequest`](#ttn.lorawan.v3.UpdateApplicationAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) | Update the rights of an existing application API key. To generate an API key, the CreateAPIKey should be used. To delete an API key, update it with zero rights. |
 | `SetCollaborator` | [`SetApplicationCollaboratorRequest`](#ttn.lorawan.v3.SetApplicationCollaboratorRequest) | [`.google.protobuf.Empty`](#google.protobuf.Empty) | Setting a collaborator without rights, removes them. |
 | `ListCollaborators` | [`ListApplicationCollaboratorsRequest`](#ttn.lorawan.v3.ListApplicationCollaboratorsRequest) | [`Collaborators`](#ttn.lorawan.v3.Collaborators) |  |
@@ -556,12 +579,13 @@ where the user or organization is collaborator on.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `ListRights` | `GET` | `/api/v3//applications/{application_id}/rights` |  |
-| `CreateAPIKey` | `POST` | `/api/v3//applications/{application_ids.application_id}/api-keys` | `*` |
-| `ListAPIKeys` | `GET` | `/api/v3//applications/{application_ids.application_id}/api-keys` |  |
-| `UpdateAPIKey` | `PUT` | `/api/v3//applications/{application_ids.application_id}/api-keys/{api_key.id}` | `*` |
-| `SetCollaborator` | `PUT` | `/api/v3//applications/{application_ids.application_id}/collaborators` | `*` |
-| `ListCollaborators` | `GET` | `/api/v3//applications/{application_ids.application_id}/collaborators` |  |
+| `ListRights` | `GET` | `/api/v3/applications/{application_id}/rights` |  |
+| `CreateAPIKey` | `POST` | `/api/v3/applications/{application_ids.application_id}/api-keys` | `*` |
+| `ListAPIKeys` | `GET` | `/api/v3/applications/{application_ids.application_id}/api-keys` |  |
+| `GetAPIKey` | `GET` | `/api/v3/applications/{application_ids.application_id}/api-keys/{key_id}` |  |
+| `UpdateAPIKey` | `PUT` | `/api/v3/applications/{application_ids.application_id}/api-keys/{api_key.id}` | `*` |
+| `SetCollaborator` | `PUT` | `/api/v3/applications/{application_ids.application_id}/collaborators` | `*` |
+| `ListCollaborators` | `GET` | `/api/v3/applications/{application_ids.application_id}/collaborators` |  |
 
 ### <a name="ttn.lorawan.v3.ApplicationRegistry">Service `ApplicationRegistry`</a>
 
@@ -577,14 +601,14 @@ where the user or organization is collaborator on.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Create` | `POST` | `/api/v3//users/{collaborator.user_ids.user_id}/applications` | `*` |
-| `Create` | `POST` | `/api/v3//organizations/{collaborator.organization_ids.organization_id}/applications` | `*` |
-| `Get` | `GET` | `/api/v3//applications/{application_ids.application_id}` |  |
-| `List` | `GET` | `/api/v3//applications` |  |
-| `List` | `GET` | `/api/v3//users/{collaborator.user_ids.user_id}/applications` |  |
-| `List` | `GET` | `/api/v3//organizations/{collaborator.organization_ids.organization_id}/applications` |  |
-| `Update` | `PUT` | `/api/v3//applications/{application.ids.application_id}` | `*` |
-| `Delete` | `DELETE` | `/api/v3//applications/{application_id}` |  |
+| `Create` | `POST` | `/api/v3/users/{collaborator.user_ids.user_id}/applications` | `*` |
+| `Create` | `POST` | `/api/v3/organizations/{collaborator.organization_ids.organization_id}/applications` | `*` |
+| `Get` | `GET` | `/api/v3/applications/{application_ids.application_id}` |  |
+| `List` | `GET` | `/api/v3/applications` |  |
+| `List` | `GET` | `/api/v3/users/{collaborator.user_ids.user_id}/applications` |  |
+| `List` | `GET` | `/api/v3/organizations/{collaborator.organization_ids.organization_id}/applications` |  |
+| `Update` | `PUT` | `/api/v3/applications/{application.ids.application_id}` | `*` |
+| `Delete` | `DELETE` | `/api/v3/applications/{application_id}` |  |
 
 ## <a name="lorawan-stack/api/applicationserver.proto">File `lorawan-stack/api/applicationserver.proto`</a>
 
@@ -665,9 +689,9 @@ The AppAs service connects an application or integration to an Application Serve
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `DownlinkQueuePush` | `POST` | `/api/v3//as/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}/down/push` | `*` |
-| `DownlinkQueueReplace` | `POST` | `/api/v3//as/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}/down/replace` | `*` |
-| `DownlinkQueueList` | `GET` | `/api/v3//as/applications/{application_ids.application_id}/devices/{device_id}/down` |  |
+| `DownlinkQueuePush` | `POST` | `/api/v3/as/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}/down/push` | `*` |
+| `DownlinkQueueReplace` | `POST` | `/api/v3/as/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}/down/replace` | `*` |
+| `DownlinkQueueList` | `GET` | `/api/v3/as/applications/{application_ids.application_id}/devices/{device_id}/down` |  |
 
 ### <a name="ttn.lorawan.v3.As">Service `As`</a>
 
@@ -684,10 +708,10 @@ The As service manages the Application Server.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `GetLink` | `GET` | `/api/v3//as/applications/{application_ids.application_id}/link` |  |
-| `SetLink` | `PUT` | `/api/v3//as/applications/{application_ids.application_id}/link` | `*` |
-| `DeleteLink` | `DELETE` | `/api/v3//as/applications/{application_id}/link` |  |
-| `GetLinkStats` | `GET` | `/api/v3//as/applications/{application_id}/link/stats` |  |
+| `GetLink` | `GET` | `/api/v3/as/applications/{application_ids.application_id}/link` |  |
+| `SetLink` | `PUT` | `/api/v3/as/applications/{application_ids.application_id}/link` | `*` |
+| `DeleteLink` | `DELETE` | `/api/v3/as/applications/{application_id}/link` |  |
+| `GetLinkStats` | `GET` | `/api/v3/as/applications/{application_id}/link/stats` |  |
 
 ### <a name="ttn.lorawan.v3.AsEndDeviceRegistry">Service `AsEndDeviceRegistry`</a>
 
@@ -703,10 +727,10 @@ The AsEndDeviceRegistry service allows clients to manage their end devices on th
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Get` | `GET` | `/api/v3//as/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
-| `Set` | `PUT` | `/api/v3//as/applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
-| `Set` | `POST` | `/api/v3//as/applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
-| `Delete` | `DELETE` | `/api/v3//as/applications/{application_ids.application_id}/devices/{device_id}` |  |
+| `Get` | `GET` | `/api/v3/as/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
+| `Set` | `PUT` | `/api/v3/as/applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
+| `Set` | `POST` | `/api/v3/as/applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
+| `Delete` | `DELETE` | `/api/v3/as/applications/{application_ids.application_id}/devices/{device_id}` |  |
 
 ## <a name="lorawan-stack/api/applicationserver_web.proto">File `lorawan-stack/api/applicationserver_web.proto`</a>
 
@@ -835,11 +859,12 @@ The AsEndDeviceRegistry service allows clients to manage their end devices on th
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `GetFormats` | `GET` | `/api/v3//as/webhook-formats` |  |
-| `Get` | `GET` | `/api/v3//as/applications/{ids.application_ids.application_id}/webhooks/{ids.webhook_id}` |  |
-| `List` | `GET` | `/api/v3//as/applications/{application_ids.application_id}/webhooks` |  |
-| `Set` | `POST` | `/api/v3//as/applications/{webhook.ids.application_ids.application_id}/webhooks/{webhook.ids.webhook_id}` | `*` |
-| `Delete` | `DELETE` | `/api/v3//as/applications/{application_ids.application_id}/webhooks/{webhook_id}` |  |
+| `GetFormats` | `GET` | `/api/v3/as/webhook-formats` |  |
+| `Get` | `GET` | `/api/v3/as/webhooks/{ids.application_ids.application_id}/{ids.webhook_id}` |  |
+| `List` | `GET` | `/api/v3/as/webhooks/{application_ids.application_id}` |  |
+| `Set` | `PUT` | `/api/v3/as/webhooks/{webhook.ids.application_ids.application_id}/{webhook.ids.webhook_id}` | `*` |
+| `Set` | `POST` | `/api/v3/as/webhooks/{webhook.ids.application_ids.application_id}` | `*` |
+| `Delete` | `DELETE` | `/api/v3/as/webhooks/{application_ids.application_id}/{webhook_id}` |  |
 
 ## <a name="lorawan-stack/api/client.proto">File `lorawan-stack/api/client.proto`</a>
 
@@ -1002,9 +1027,9 @@ The OAuth2 flows an OAuth client can use to get an access token.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `ListRights` | `GET` | `/api/v3//clients/{client_id}/rights` |  |
-| `SetCollaborator` | `PUT` | `/api/v3//clients/{client_ids.client_id}/collaborators` | `*` |
-| `ListCollaborators` | `GET` | `/api/v3//clients/{client_ids.client_id}/collaborators` |  |
+| `ListRights` | `GET` | `/api/v3/clients/{client_id}/rights` |  |
+| `SetCollaborator` | `PUT` | `/api/v3/clients/{client_ids.client_id}/collaborators` | `*` |
+| `ListCollaborators` | `GET` | `/api/v3/clients/{client_ids.client_id}/collaborators` |  |
 
 ### <a name="ttn.lorawan.v3.ClientRegistry">Service `ClientRegistry`</a>
 
@@ -1020,14 +1045,14 @@ The OAuth2 flows an OAuth client can use to get an access token.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Create` | `POST` | `/api/v3//users/{collaborator.user_ids.user_id}/clients` | `*` |
-| `Create` | `POST` | `/api/v3//organizations/{collaborator.organization_ids.organization_id}/clients` | `*` |
-| `Get` | `GET` | `/api/v3//clients/{client_ids.client_id}` |  |
-| `List` | `GET` | `/api/v3//clients` |  |
-| `List` | `GET` | `/api/v3//users/{collaborator.user_ids.user_id}/clients` |  |
-| `List` | `GET` | `/api/v3//organizations/{collaborator.organization_ids.organization_id}/clients` |  |
-| `Update` | `PUT` | `/api/v3//clients/{client.ids.client_id}` | `*` |
-| `Delete` | `DELETE` | `/api/v3//clients/{client_id}` |  |
+| `Create` | `POST` | `/api/v3/users/{collaborator.user_ids.user_id}/clients` | `*` |
+| `Create` | `POST` | `/api/v3/organizations/{collaborator.organization_ids.organization_id}/clients` | `*` |
+| `Get` | `GET` | `/api/v3/clients/{client_ids.client_id}` |  |
+| `List` | `GET` | `/api/v3/clients` |  |
+| `List` | `GET` | `/api/v3/users/{collaborator.user_ids.user_id}/clients` |  |
+| `List` | `GET` | `/api/v3/organizations/{collaborator.organization_ids.organization_id}/clients` |  |
+| `Update` | `PUT` | `/api/v3/clients/{client.ids.client_id}` | `*` |
+| `Delete` | `DELETE` | `/api/v3/clients/{client_id}` |  |
 
 ## <a name="lorawan-stack/api/cluster.proto">File `lorawan-stack/api/cluster.proto`</a>
 
@@ -1095,7 +1120,7 @@ PeerInfo
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `ListFrequencyPlans` | `GET` | `/api/v3//configuration/frequency-plans` |  |
+| `ListFrequencyPlans` | `GET` | `/api/v3/configuration/frequency-plans` |  |
 
 ## <a name="lorawan-stack/api/contact_info.proto">File `lorawan-stack/api/contact_info.proto`</a>
 
@@ -1148,8 +1173,8 @@ PeerInfo
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `RequestValidation` | `POST` | `/api/v3//contact_info/validation` |  |
-| `Validate` | `PATCH` | `/api/v3//contact_info/validation` |  |
+| `RequestValidation` | `POST` | `/api/v3/contact_info/validation` |  |
+| `Validate` | `PATCH` | `/api/v3/contact_info/validation` |  |
 
 ## <a name="lorawan-stack/api/end_device.proto">File `lorawan-stack/api/end_device.proto`</a>
 
@@ -1198,6 +1223,7 @@ SDKs are responsible for combining (if desired) the three.
 | `net_id` | [`bytes`](#bytes) |  | Home NetID. Stored in Join Server. |
 | `mac_settings` | [`MACSettings`](#ttn.lorawan.v3.MACSettings) |  | Settings for how the Network Server handles MAC layer for this device. Stored in Network Server. |
 | `mac_state` | [`MACState`](#ttn.lorawan.v3.MACState) |  | MAC state of the device. Stored in Network Server. |
+| `pending_mac_state` | [`MACState`](#ttn.lorawan.v3.MACState) |  | Pending MAC state of the device. Stored in Network Server. |
 | `session` | [`Session`](#ttn.lorawan.v3.Session) |  | Current session of the device. Stored in Network Server and Application Server. |
 | `pending_session` | [`Session`](#ttn.lorawan.v3.Session) |  | Pending session. Stored in Network Server and Application Server until RekeyInd is received. |
 | `last_dev_nonce` | [`uint32`](#uint32) |  | Last DevNonce used. This field is only used for devices using LoRaWAN version 1.1 and later. Stored in Join Server. |
@@ -1367,8 +1393,6 @@ This is used internally by the Network Server and is read only.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `max_eirp` | [`float`](#float) |  | Maximum EIRP (dBm). |
-| `uplink_dwell_time` | [`bool`](#bool) |  | Uplink dwell time is set (400ms). |
-| `downlink_dwell_time` | [`bool`](#bool) |  | Downlink dwell time is set (400ms). |
 | `adr_data_rate_index` | [`DataRateIndex`](#ttn.lorawan.v3.DataRateIndex) |  | ADR: data rate index to use. |
 | `adr_tx_power_index` | [`uint32`](#uint32) |  | ADR: transmission power index to use. |
 | `adr_nb_trans` | [`uint32`](#uint32) |  | ADR: number of retransmissions. |
@@ -1385,6 +1409,8 @@ This is used internally by the Network Server and is read only.
 | `ping_slot_data_rate_index` | [`DataRateIndex`](#ttn.lorawan.v3.DataRateIndex) |  | Data rate index of the class B ping slot. |
 | `beacon_frequency` | [`uint64`](#uint64) |  | Frequency of the class B beacon (Hz). |
 | `channels` | [`MACParameters.Channel`](#ttn.lorawan.v3.MACParameters.Channel) | repeated | Configured uplink channels and optionally Rx1 frequency. |
+| `uplink_dwell_time` | [`google.protobuf.BoolValue`](#google.protobuf.BoolValue) |  | Whether uplink dwell time is set (400ms). If this field is not set, then the value is either unknown or irrelevant(Network Server cannot modify it). |
+| `downlink_dwell_time` | [`google.protobuf.BoolValue`](#google.protobuf.BoolValue) |  | Whether downlink dwell time is set (400ms). If this field is not set, then the value is either unknown or irrelevant(Network Server cannot modify it). |
 
 #### Field Rules
 
@@ -1627,11 +1653,11 @@ Power state of the device.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Create` | `POST` | `/api/v3//applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
-| `Get` | `GET` | `/api/v3//applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
-| `List` | `GET` | `/api/v3//applications/{application_ids.application_id}/devices` |  |
-| `Update` | `PUT` | `/api/v3//applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
-| `Delete` | `DELETE` | `/api/v3//applications/{application_ids.application_id}/devices/{device_id}` |  |
+| `Create` | `POST` | `/api/v3/applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
+| `Get` | `GET` | `/api/v3/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
+| `List` | `GET` | `/api/v3/applications/{application_ids.application_id}/devices` |  |
+| `Update` | `PUT` | `/api/v3/applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
+| `Delete` | `DELETE` | `/api/v3/applications/{application_ids.application_id}/devices/{device_id}` |  |
 
 ## <a name="lorawan-stack/api/enums.proto">File `lorawan-stack/api/enums.proto`</a>
 
@@ -1719,7 +1745,7 @@ The Events service serves events from the cluster.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Stream` | `POST` | `/api/v3//events` | `*` |
+| `Stream` | `POST` | `/api/v3/events` | `*` |
 
 ## <a name="lorawan-stack/api/gateway.proto">File `lorawan-stack/api/gateway.proto`</a>
 
@@ -1845,6 +1871,24 @@ Connection stats as monitored by the Gateway Server.
 | `uplink_count` | [`uint64`](#uint64) |  |  |
 | `last_downlink_received_at` | [`google.protobuf.Timestamp`](#google.protobuf.Timestamp) |  |  |
 | `downlink_count` | [`uint64`](#uint64) |  |  |
+| `round_trip_times` | [`GatewayConnectionStats.RoundTripTimes`](#ttn.lorawan.v3.GatewayConnectionStats.RoundTripTimes) |  |  |
+
+### <a name="ttn.lorawan.v3.GatewayConnectionStats.RoundTripTimes">Message `GatewayConnectionStats.RoundTripTimes`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `min` | [`google.protobuf.Duration`](#google.protobuf.Duration) |  |  |
+| `max` | [`google.protobuf.Duration`](#google.protobuf.Duration) |  |  |
+| `median` | [`google.protobuf.Duration`](#google.protobuf.Duration) |  |  |
+| `count` | [`uint32`](#uint32) |  |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `min` | <p>`message.required`: `true`</p> |
+| `max` | <p>`message.required`: `true`</p> |
+| `median` | <p>`message.required`: `true`</p> |
 
 ### <a name="ttn.lorawan.v3.GatewayModel">Message `GatewayModel`</a>
 
@@ -1953,6 +1997,19 @@ Identifies an end device model with version information.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `gateways` | [`Gateway`](#ttn.lorawan.v3.Gateway) | repeated |  |
+
+### <a name="ttn.lorawan.v3.GetGatewayAPIKeyRequest">Message `GetGatewayAPIKeyRequest`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `gateway_ids` | [`GatewayIdentifiers`](#ttn.lorawan.v3.GatewayIdentifiers) |  |  |
+| `key_id` | [`string`](#string) |  | Unique public identifier for the API key. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `gateway_ids` | <p>`message.required`: `true`</p> |
 
 ### <a name="ttn.lorawan.v3.GetGatewayIdentifiersForEUIRequest">Message `GetGatewayIdentifiersForEUIRequest`</a>
 
@@ -2080,6 +2137,7 @@ where the user or organization is collaborator on.
 | `ListRights` | [`GatewayIdentifiers`](#ttn.lorawan.v3.GatewayIdentifiers) | [`Rights`](#ttn.lorawan.v3.Rights) |  |
 | `CreateAPIKey` | [`CreateGatewayAPIKeyRequest`](#ttn.lorawan.v3.CreateGatewayAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `ListAPIKeys` | [`ListGatewayAPIKeysRequest`](#ttn.lorawan.v3.ListGatewayAPIKeysRequest) | [`APIKeys`](#ttn.lorawan.v3.APIKeys) |  |
+| `GetAPIKey` | [`GetGatewayAPIKeyRequest`](#ttn.lorawan.v3.GetGatewayAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `UpdateAPIKey` | [`UpdateGatewayAPIKeyRequest`](#ttn.lorawan.v3.UpdateGatewayAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) | Update the rights of an existing gateway API key. To generate an API key, the CreateAPIKey should be used. To delete an API key, update it with zero rights. |
 | `SetCollaborator` | [`SetGatewayCollaboratorRequest`](#ttn.lorawan.v3.SetGatewayCollaboratorRequest) | [`.google.protobuf.Empty`](#google.protobuf.Empty) | Set the rights of a collaborator on the gateway. Users or organizations are considered to be a collaborator if they have at least one right on the gateway. |
 | `ListCollaborators` | [`ListGatewayCollaboratorsRequest`](#ttn.lorawan.v3.ListGatewayCollaboratorsRequest) | [`Collaborators`](#ttn.lorawan.v3.Collaborators) |  |
@@ -2088,12 +2146,13 @@ where the user or organization is collaborator on.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `ListRights` | `GET` | `/api/v3//gateways/{gateway_id}/rights` |  |
-| `CreateAPIKey` | `POST` | `/api/v3//gateways/{gateway_ids.gateway_id}/api-keys` | `*` |
-| `ListAPIKeys` | `GET` | `/api/v3//gateways/{gateway_ids.gateway_id}/api-keys` |  |
-| `UpdateAPIKey` | `PUT` | `/api/v3//gateways/{gateway_ids.gateway_id}/api-keys/{api_key.id}` | `*` |
-| `SetCollaborator` | `PUT` | `/api/v3//gateways/{gateway_ids.gateway_id}/collaborators` | `*` |
-| `ListCollaborators` | `GET` | `/api/v3//gateways/{gateway_ids.gateway_id}/collaborators` |  |
+| `ListRights` | `GET` | `/api/v3/gateways/{gateway_id}/rights` |  |
+| `CreateAPIKey` | `POST` | `/api/v3/gateways/{gateway_ids.gateway_id}/api-keys` | `*` |
+| `ListAPIKeys` | `GET` | `/api/v3/gateways/{gateway_ids.gateway_id}/api-keys` |  |
+| `GetAPIKey` | `GET` | `/api/v3/gateways/{gateway_ids.gateway_id}/api-keys/{key_id}` |  |
+| `UpdateAPIKey` | `PUT` | `/api/v3/gateways/{gateway_ids.gateway_id}/api-keys/{api_key.id}` | `*` |
+| `SetCollaborator` | `PUT` | `/api/v3/gateways/{gateway_ids.gateway_id}/collaborators` | `*` |
+| `ListCollaborators` | `GET` | `/api/v3/gateways/{gateway_ids.gateway_id}/collaborators` |  |
 
 ### <a name="ttn.lorawan.v3.GatewayConfigurator">Service `GatewayConfigurator`</a>
 
@@ -2116,14 +2175,14 @@ where the user or organization is collaborator on.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Create` | `POST` | `/api/v3//users/{collaborator.user_ids.user_id}/gateways` | `*` |
-| `Create` | `POST` | `/api/v3//organizations/{collaborator.organization_ids.organization_id}/gateways` | `*` |
-| `Get` | `GET` | `/api/v3//gateways/{gateway_ids.gateway_id}` |  |
-| `List` | `GET` | `/api/v3//gateways` |  |
-| `List` | `GET` | `/api/v3//users/{collaborator.user_ids.user_id}/gateways` |  |
-| `List` | `GET` | `/api/v3//organizations/{collaborator.organization_ids.organization_id}/gateways` |  |
-| `Update` | `PUT` | `/api/v3//gateways/{gateway.ids.gateway_id}` | `*` |
-| `Delete` | `DELETE` | `/api/v3//gateways/{gateway_id}` |  |
+| `Create` | `POST` | `/api/v3/users/{collaborator.user_ids.user_id}/gateways` | `*` |
+| `Create` | `POST` | `/api/v3/organizations/{collaborator.organization_ids.organization_id}/gateways` | `*` |
+| `Get` | `GET` | `/api/v3/gateways/{gateway_ids.gateway_id}` |  |
+| `List` | `GET` | `/api/v3/gateways` |  |
+| `List` | `GET` | `/api/v3/users/{collaborator.user_ids.user_id}/gateways` |  |
+| `List` | `GET` | `/api/v3/organizations/{collaborator.organization_ids.organization_id}/gateways` |  |
+| `Update` | `PUT` | `/api/v3/gateways/{gateway.ids.gateway_id}` | `*` |
+| `Delete` | `DELETE` | `/api/v3/gateways/{gateway_id}` |  |
 
 ## <a name="lorawan-stack/api/gatewayserver.proto">File `lorawan-stack/api/gatewayserver.proto`</a>
 
@@ -2167,7 +2226,7 @@ GatewayUp may contain zero or more uplink messages and/or a status message for t
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `GetGatewayConnectionStats` | `GET` | `/api/v3//gs/gateways/{gateway_id}/connection/stats` |  |
+| `GetGatewayConnectionStats` | `GET` | `/api/v3/gs/gateways/{gateway_id}/connection/stats` |  |
 
 ### <a name="ttn.lorawan.v3.GtwGs">Service `GtwGs`</a>
 
@@ -2228,7 +2287,7 @@ The main purpose of this message is its use in events.
 | `device_id` | [`string`](#string) |  |  |
 | `application_ids` | [`ApplicationIdentifiers`](#ttn.lorawan.v3.ApplicationIdentifiers) |  |  |
 | `dev_eui` | [`bytes`](#bytes) |  | The LoRaWAN DevEUI. |
-| `join_eui` | [`bytes`](#bytes) |  | The LoRaWAN JoinEUI (or AppEUI for LoRaWAN 1.0 end devices). |
+| `join_eui` | [`bytes`](#bytes) |  | The LoRaWAN JoinEUI (AppEUI until LoRaWAN 1.0.3 end devices). |
 | `dev_addr` | [`bytes`](#bytes) |  | The LoRaWAN DevAddr. |
 
 #### Field Rules
@@ -2333,7 +2392,7 @@ OrganizationOrUserIdentifiers contains either organization or user identifiers.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `AuthInfo` | `GET` | `/api/v3//auth_info` |  |
+| `AuthInfo` | `GET` | `/api/v3/auth_info` |  |
 
 ## <a name="lorawan-stack/api/join.proto">File `lorawan-stack/api/join.proto`</a>
 
@@ -2524,6 +2583,7 @@ OrganizationOrUserIdentifiers contains either organization or user identifiers.
 | ----- | ---- | ----- | ----------- |
 | `session_key_id` | [`bytes`](#bytes) |  | Join Server issued identifier for the session keys. |
 | `dev_eui` | [`bytes`](#bytes) |  | LoRaWAN DevEUI. |
+| `join_eui` | [`bytes`](#bytes) |  | The LoRaWAN JoinEUI (AppEUI until LoRaWAN 1.0.3 end devices). |
 
 #### Field Rules
 
@@ -2563,11 +2623,11 @@ The JsEndDeviceRegistry service allows clients to manage their end devices on th
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Get` | `GET` | `/api/v3//js/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
-| `Set` | `PUT` | `/api/v3//js/applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
-| `Set` | `POST` | `/api/v3//js/applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
-| `Provision` | `PUT` | `/api/v3//js/applications/{application_ids.application_id}/provision-devices` | `*` |
-| `Delete` | `DELETE` | `/api/v3//js/applications/{application_ids.application_id}/devices/{device_id}` |  |
+| `Get` | `GET` | `/api/v3/js/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
+| `Set` | `PUT` | `/api/v3/js/applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
+| `Set` | `POST` | `/api/v3/js/applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
+| `Provision` | `PUT` | `/api/v3/js/applications/{application_ids.application_id}/provision-devices` | `*` |
+| `Delete` | `DELETE` | `/api/v3/js/applications/{application_ids.application_id}/devices/{device_id}` |  |
 
 ### <a name="ttn.lorawan.v3.NetworkCryptoService">Service `NetworkCryptoService`</a>
 
@@ -3702,7 +3762,7 @@ The UplinkMessageProcessor service processes uplink messages.
 | Field | Validations |
 | ----- | ----------- |
 | `session_key_id` | <p>`bytes.max_len`: `2048`</p> |
-| `f_port` | <p>`uint32.lte`: `255`</p> |
+| `f_port` | <p>`uint32.lte`: `255`</p><p>`uint32.gte`: `1`</p> |
 | `priority` | <p>`enum.defined_only`: `true`</p> |
 | `correlation_ids` | <p>`repeated.items.string.max_len`: `100`</p> |
 
@@ -3824,7 +3884,7 @@ The UplinkMessageProcessor service processes uplink messages.
 | Field | Validations |
 | ----- | ----------- |
 | `session_key_id` | <p>`bytes.max_len`: `2048`</p> |
-| `f_port` | <p>`uint32.lte`: `255`</p> |
+| `f_port` | <p>`uint32.lte`: `255`</p><p>`uint32.gte`: `1`</p> |
 | `rx_metadata` | <p>`repeated.min_items`: `1`</p> |
 | `settings` | <p>`message.required`: `true`</p> |
 
@@ -3846,6 +3906,21 @@ Downlink message from the network to the end device
 | Field | Validations |
 | ----- | ----------- |
 | `correlation_ids` | <p>`repeated.items.string.max_len`: `100`</p> |
+
+### <a name="ttn.lorawan.v3.DownlinkQueueOperation">Message `DownlinkQueueOperation`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `end_device_ids` | [`EndDeviceIdentifiers`](#ttn.lorawan.v3.EndDeviceIdentifiers) |  |  |
+| `operation` | [`DownlinkQueueOperation.Operation`](#ttn.lorawan.v3.DownlinkQueueOperation.Operation) |  |  |
+| `downlinks` | [`ApplicationDownlink`](#ttn.lorawan.v3.ApplicationDownlink) | repeated |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `end_device_ids` | <p>`message.required`: `true`</p> |
+| `operation` | <p>`enum.defined_only`: `true`</p> |
 
 ### <a name="ttn.lorawan.v3.DownlinkQueueRequest">Message `DownlinkQueueRequest`</a>
 
@@ -3908,6 +3983,13 @@ Uplink message from the end device to the network
 | `correlation_ids` | <p>`repeated.items.string.max_len`: `100`</p> |
 | `gateway_channel_index` | <p>`uint32.lte`: `255`</p> |
 | `device_channel_index` | <p>`uint32.lte`: `255`</p> |
+
+### <a name="ttn.lorawan.v3.DownlinkQueueOperation.Operation">Enum `DownlinkQueueOperation.Operation`</a>
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| `PUSH` | 0 |  |
+| `REPLACE` | 1 |  |
 
 ### <a name="ttn.lorawan.v3.PayloadFormatter">Enum `PayloadFormatter`</a>
 
@@ -4004,6 +4086,12 @@ More estimation methods can be added. |
 
 ## <a name="lorawan-stack/api/networkserver.proto">File `lorawan-stack/api/networkserver.proto`</a>
 
+### <a name="ttn.lorawan.v3.GenerateDevAddrResponse">Message `GenerateDevAddrResponse`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `dev_addr` | [`bytes`](#bytes) |  |  |
+
 ### <a name="ttn.lorawan.v3.AsNs">Service `AsNs`</a>
 
 The AsNs service connects an Application Server to a Network Server.
@@ -4023,6 +4111,18 @@ The GsNs service connects a Gateway Server to a Network Server.
 | ----------- | ------------ | ------------- | ------------|
 | `HandleUplink` | [`UplinkMessage`](#ttn.lorawan.v3.UplinkMessage) | [`.google.protobuf.Empty`](#google.protobuf.Empty) |  |
 
+### <a name="ttn.lorawan.v3.Ns">Service `Ns`</a>
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| `GenerateDevAddr` | [`.google.protobuf.Empty`](#google.protobuf.Empty) | [`GenerateDevAddrResponse`](#ttn.lorawan.v3.GenerateDevAddrResponse) | GenerateDevAddr requests a device address assignment from the Network Server. |
+
+#### HTTP bindings
+
+| Method Name | Method | Pattern | Body |
+| ----------- | ------ | ------- | ---- |
+| `GenerateDevAddr` | `GET` | `/api/v3/ns/dev_addr` |  |
+
 ### <a name="ttn.lorawan.v3.NsEndDeviceRegistry">Service `NsEndDeviceRegistry`</a>
 
 The NsEndDeviceRegistry service allows clients to manage their end devices on the Network Server.
@@ -4037,10 +4137,10 @@ The NsEndDeviceRegistry service allows clients to manage their end devices on th
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Get` | `GET` | `/api/v3//ns/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
-| `Set` | `PUT` | `/api/v3//ns/applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
-| `Set` | `POST` | `/api/v3//ns/applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
-| `Delete` | `DELETE` | `/api/v3//ns/applications/{application_ids.application_id}/devices/{device_id}` |  |
+| `Get` | `GET` | `/api/v3/ns/applications/{end_device_ids.application_ids.application_id}/devices/{end_device_ids.device_id}` |  |
+| `Set` | `PUT` | `/api/v3/ns/applications/{end_device.ids.application_ids.application_id}/devices/{end_device.ids.device_id}` | `*` |
+| `Set` | `POST` | `/api/v3/ns/applications/{end_device.ids.application_ids.application_id}/devices` | `*` |
+| `Delete` | `DELETE` | `/api/v3/ns/applications/{application_ids.application_id}/devices/{device_id}` |  |
 
 ## <a name="lorawan-stack/api/oauth.proto">File `lorawan-stack/api/oauth.proto`</a>
 
@@ -4192,10 +4292,10 @@ The NsEndDeviceRegistry service allows clients to manage their end devices on th
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `List` | `GET` | `/api/v3//users/{user_ids.user_id}/authorizations` |  |
-| `ListTokens` | `GET` | `/api/v3//users/{user_ids.user_id}/authorizations/{client_ids.client_id}/tokens` |  |
-| `Delete` | `DELETE` | `/api/v3//users/{user_ids.user_id}/authorizations/{client_ids.client_id}` |  |
-| `DeleteToken` | `DELETE` | `/api/v3//users/{user_ids.user_id}/authorizations/{client_ids.client_id}/tokens/{id}` |  |
+| `List` | `GET` | `/api/v3/users/{user_ids.user_id}/authorizations` |  |
+| `ListTokens` | `GET` | `/api/v3/users/{user_ids.user_id}/authorizations/{client_ids.client_id}/tokens` |  |
+| `Delete` | `DELETE` | `/api/v3/users/{user_ids.user_id}/authorizations/{client_ids.client_id}` |  |
+| `DeleteToken` | `DELETE` | `/api/v3/users/{user_ids.user_id}/authorizations/{client_ids.client_id}/tokens/{id}` |  |
 
 ## <a name="lorawan-stack/api/organization.proto">File `lorawan-stack/api/organization.proto`</a>
 
@@ -4228,6 +4328,19 @@ The NsEndDeviceRegistry service allows clients to manage their end devices on th
 | ----- | ----------- |
 | `organization` | <p>`message.required`: `true`</p> |
 | `collaborator` | <p>`message.required`: `true`</p> |
+
+### <a name="ttn.lorawan.v3.GetOrganizationAPIKeyRequest">Message `GetOrganizationAPIKeyRequest`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `organization_ids` | [`OrganizationIdentifiers`](#ttn.lorawan.v3.OrganizationIdentifiers) |  |  |
+| `key_id` | [`string`](#string) |  | Unique public identifier for the API key. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `organization_ids` | <p>`message.required`: `true`</p> |
 
 ### <a name="ttn.lorawan.v3.GetOrganizationRequest">Message `GetOrganizationRequest`</a>
 
@@ -4376,6 +4489,7 @@ where the user or organization is collaborator on.
 | `ListRights` | [`OrganizationIdentifiers`](#ttn.lorawan.v3.OrganizationIdentifiers) | [`Rights`](#ttn.lorawan.v3.Rights) |  |
 | `CreateAPIKey` | [`CreateOrganizationAPIKeyRequest`](#ttn.lorawan.v3.CreateOrganizationAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `ListAPIKeys` | [`ListOrganizationAPIKeysRequest`](#ttn.lorawan.v3.ListOrganizationAPIKeysRequest) | [`APIKeys`](#ttn.lorawan.v3.APIKeys) |  |
+| `GetAPIKey` | [`GetOrganizationAPIKeyRequest`](#ttn.lorawan.v3.GetOrganizationAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `UpdateAPIKey` | [`UpdateOrganizationAPIKeyRequest`](#ttn.lorawan.v3.UpdateOrganizationAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) | Update the rights of an existing organization API key. To generate an API key, the CreateAPIKey should be used. To delete an API key, update it with zero rights. |
 | `SetCollaborator` | [`SetOrganizationCollaboratorRequest`](#ttn.lorawan.v3.SetOrganizationCollaboratorRequest) | [`.google.protobuf.Empty`](#google.protobuf.Empty) | Set the rights of a collaborator (member) on the organization. Users are considered to be a collaborator if they have at least one right on the organization. Note that only users can collaborate (be member of) an organization. |
 | `ListCollaborators` | [`ListOrganizationCollaboratorsRequest`](#ttn.lorawan.v3.ListOrganizationCollaboratorsRequest) | [`Collaborators`](#ttn.lorawan.v3.Collaborators) |  |
@@ -4384,12 +4498,13 @@ where the user or organization is collaborator on.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `ListRights` | `GET` | `/api/v3//organizations/{organization_id}/rights` |  |
-| `CreateAPIKey` | `POST` | `/api/v3//organizations/{organization_ids.organization_id}/api-keys` | `*` |
-| `ListAPIKeys` | `GET` | `/api/v3//organizations/{organization_ids.organization_id}/api-keys` |  |
-| `UpdateAPIKey` | `PUT` | `/api/v3//organizations/{organization_ids.organization_id}/api-keys/{api_key.id}` | `*` |
-| `SetCollaborator` | `PUT` | `/api/v3//organizations/{organization_ids.organization_id}/collaborators` | `*` |
-| `ListCollaborators` | `GET` | `/api/v3//organizations/{organization_ids.organization_id}/collaborators` |  |
+| `ListRights` | `GET` | `/api/v3/organizations/{organization_id}/rights` |  |
+| `CreateAPIKey` | `POST` | `/api/v3/organizations/{organization_ids.organization_id}/api-keys` | `*` |
+| `ListAPIKeys` | `GET` | `/api/v3/organizations/{organization_ids.organization_id}/api-keys` |  |
+| `GetAPIKey` | `GET` | `/api/v3/organizations/{organization_ids.organization_id}/api-keys/{key_id}` |  |
+| `UpdateAPIKey` | `PUT` | `/api/v3/organizations/{organization_ids.organization_id}/api-keys/{api_key.id}` | `*` |
+| `SetCollaborator` | `PUT` | `/api/v3/organizations/{organization_ids.organization_id}/collaborators` | `*` |
+| `ListCollaborators` | `GET` | `/api/v3/organizations/{organization_ids.organization_id}/collaborators` |  |
 
 ### <a name="ttn.lorawan.v3.OrganizationRegistry">Service `OrganizationRegistry`</a>
 
@@ -4405,12 +4520,12 @@ where the user or organization is collaborator on.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Create` | `POST` | `/api/v3//users/{collaborator.user_ids.user_id}/organizations` | `*` |
-| `Get` | `GET` | `/api/v3//organizations/{organization_ids.organization_id}` |  |
-| `List` | `GET` | `/api/v3//organizations` |  |
-| `List` | `GET` | `/api/v3//users/{collaborator.user_ids.user_id}/organizations` |  |
-| `Update` | `PUT` | `/api/v3//organizations/{organization.ids.organization_id}` | `*` |
-| `Delete` | `DELETE` | `/api/v3//organizations/{organization_id}` |  |
+| `Create` | `POST` | `/api/v3/users/{collaborator.user_ids.user_id}/organizations` | `*` |
+| `Get` | `GET` | `/api/v3/organizations/{organization_ids.organization_id}` |  |
+| `List` | `GET` | `/api/v3/organizations` |  |
+| `List` | `GET` | `/api/v3/users/{collaborator.user_ids.user_id}/organizations` |  |
+| `Update` | `PUT` | `/api/v3/organizations/{organization.ids.organization_id}` | `*` |
+| `Delete` | `DELETE` | `/api/v3/organizations/{organization_id}` |  |
 
 ## <a name="lorawan-stack/api/regional.proto">File `lorawan-stack/api/regional.proto`</a>
 
@@ -4546,7 +4661,7 @@ Right is the enum that defines all the different rights to do something in the n
 | `RIGHT_APPLICATION_TRAFFIC_READ` | 24 | The right to read application traffic (uplink and downlink). |
 | `RIGHT_APPLICATION_TRAFFIC_UP_WRITE` | 25 | The right to write uplink application traffic. |
 | `RIGHT_APPLICATION_TRAFFIC_DOWN_WRITE` | 26 | The right to write downlink application traffic. |
-| `RIGHT_APPLICATION_LINK` | 27 | The right to link as Application to a Network Server for traffic exchange, i.e. read uplink and write downlink (API keys only). This right is typically only given to an Application Server. |
+| `RIGHT_APPLICATION_LINK` | 27 | The right to link as Application to a Network Server for traffic exchange, i.e. read uplink and write downlink (API keys only). This right is typically only given to an Application Server. This right implies RIGHT_APPLICATION_INFO. |
 | `RIGHT_APPLICATION_ALL` | 28 | The pseudo-right for all (current and future) application rights. |
 | `RIGHT_CLIENT_ALL` | 29 | The pseudo-right for all (current and future) OAuth client rights. |
 | `RIGHT_GATEWAY_INFO` | 30 | The right to view gateway information. |
@@ -4556,7 +4671,7 @@ Right is the enum that defines all the different rights to do something in the n
 | `RIGHT_GATEWAY_DELETE` | 34 | The right to delete gateway. |
 | `RIGHT_GATEWAY_TRAFFIC_READ` | 35 | The right to read gateway traffic. |
 | `RIGHT_GATEWAY_TRAFFIC_DOWN_WRITE` | 36 | The right to write downlink gateway traffic. |
-| `RIGHT_GATEWAY_LINK` | 37 | The right to link as Gateway to a Gateway Server for traffic exchange, i.e. write uplink and read downlink (API keys only) |
+| `RIGHT_GATEWAY_LINK` | 37 | The right to link as Gateway to a Gateway Server for traffic exchange, i.e. write uplink and read downlink (API keys only) This right is typically only given to a gateway. This right implies RIGHT_GATEWAY_INFO. |
 | `RIGHT_GATEWAY_STATUS_READ` | 38 | The right to view gateway status. |
 | `RIGHT_GATEWAY_LOCATION_READ` | 39 | The right to view view gateway location. |
 | `RIGHT_GATEWAY_ALL` | 40 | The pseudo-right for all (current and future) gateway rights. |
@@ -4645,7 +4760,7 @@ This service is not implemented on all deployments.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `SearchEndDevices` | `GET` | `/api/v3//search/applications/{application_ids.application_id}/devices` |  |
+| `SearchEndDevices` | `GET` | `/api/v3/search/applications/{application_ids.application_id}/devices` |  |
 
 ### <a name="ttn.lorawan.v3.EntityRegistrySearch">Service `EntityRegistrySearch`</a>
 
@@ -4665,11 +4780,11 @@ This service is not implemented on all deployments.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `SearchApplications` | `GET` | `/api/v3//search/applications` |  |
-| `SearchClients` | `GET` | `/api/v3//search/clients` |  |
-| `SearchGateways` | `GET` | `/api/v3//search/gateways` |  |
-| `SearchOrganizations` | `GET` | `/api/v3//search/organizations` |  |
-| `SearchUsers` | `GET` | `/api/v3//search/users` |  |
+| `SearchApplications` | `GET` | `/api/v3/search/applications` |  |
+| `SearchClients` | `GET` | `/api/v3/search/clients` |  |
+| `SearchGateways` | `GET` | `/api/v3/search/gateways` |  |
+| `SearchOrganizations` | `GET` | `/api/v3/search/organizations` |  |
+| `SearchUsers` | `GET` | `/api/v3/search/users` |  |
 
 ## <a name="lorawan-stack/api/user.proto">File `lorawan-stack/api/user.proto`</a>
 
@@ -4725,6 +4840,19 @@ This service is not implemented on all deployments.
 | Field | Validations |
 | ----- | ----------- |
 | `email` | <p>`string.email`: `true`</p> |
+
+### <a name="ttn.lorawan.v3.GetUserAPIKeyRequest">Message `GetUserAPIKeyRequest`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `user_ids` | [`UserIdentifiers`](#ttn.lorawan.v3.UserIdentifiers) |  |  |
+| `key_id` | [`string`](#string) |  | Unique public identifier for the API key. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `user_ids` | <p>`message.required`: `true`</p> |
 
 ### <a name="ttn.lorawan.v3.GetUserRequest">Message `GetUserRequest`</a>
 
@@ -4982,16 +5110,18 @@ User is the message that defines an user on the network.
 | `ListRights` | [`UserIdentifiers`](#ttn.lorawan.v3.UserIdentifiers) | [`Rights`](#ttn.lorawan.v3.Rights) |  |
 | `CreateAPIKey` | [`CreateUserAPIKeyRequest`](#ttn.lorawan.v3.CreateUserAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `ListAPIKeys` | [`ListUserAPIKeysRequest`](#ttn.lorawan.v3.ListUserAPIKeysRequest) | [`APIKeys`](#ttn.lorawan.v3.APIKeys) |  |
+| `GetAPIKey` | [`GetUserAPIKeyRequest`](#ttn.lorawan.v3.GetUserAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) |  |
 | `UpdateAPIKey` | [`UpdateUserAPIKeyRequest`](#ttn.lorawan.v3.UpdateUserAPIKeyRequest) | [`APIKey`](#ttn.lorawan.v3.APIKey) | Update the rights of an existing user API key. To generate an API key, the CreateAPIKey should be used. To delete an API key, update it with zero rights. |
 
 #### HTTP bindings
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `ListRights` | `GET` | `/api/v3//users/{user_id}/rights` |  |
-| `CreateAPIKey` | `POST` | `/api/v3//users/{user_ids.user_id}/api-keys` | `*` |
-| `ListAPIKeys` | `GET` | `/api/v3//users/{user_ids.user_id}/api-keys` |  |
-| `UpdateAPIKey` | `PUT` | `/api/v3//users/{user_ids.user_id}/api-keys/{api_key.id}` | `*` |
+| `ListRights` | `GET` | `/api/v3/users/{user_id}/rights` |  |
+| `CreateAPIKey` | `POST` | `/api/v3/users/{user_ids.user_id}/api-keys` | `*` |
+| `ListAPIKeys` | `GET` | `/api/v3/users/{user_ids.user_id}/api-keys` |  |
+| `GetAPIKey` | `GET` | `/api/v3/users/{user_ids.user_id}/api-keys/{key_id}` |  |
+| `UpdateAPIKey` | `PUT` | `/api/v3/users/{user_ids.user_id}/api-keys/{api_key.id}` | `*` |
 
 ### <a name="ttn.lorawan.v3.UserInvitationRegistry">Service `UserInvitationRegistry`</a>
 
@@ -5005,9 +5135,9 @@ User is the message that defines an user on the network.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Send` | `POST` | `/api/v3//invitations` | `*` |
-| `List` | `GET` | `/api/v3//invitations` |  |
-| `Delete` | `DELETE` | `/api/v3//invitations` |  |
+| `Send` | `POST` | `/api/v3/invitations` | `*` |
+| `List` | `GET` | `/api/v3/invitations` |  |
+| `Delete` | `DELETE` | `/api/v3/invitations` |  |
 
 ### <a name="ttn.lorawan.v3.UserRegistry">Service `UserRegistry`</a>
 
@@ -5024,12 +5154,12 @@ User is the message that defines an user on the network.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `Create` | `POST` | `/api/v3//users` | `*` |
-| `Get` | `GET` | `/api/v3//users/{user_ids.user_id}` |  |
-| `Update` | `PUT` | `/api/v3//users/{user.ids.user_id}` | `*` |
-| `CreateTemporaryPassword` | `POST` | `/api/v3//users/{user_ids.user_id}/temporary_password` |  |
-| `UpdatePassword` | `PUT` | `/api/v3//users/{user_ids.user_id}/password` | `*` |
-| `Delete` | `DELETE` | `/api/v3//users/{user_id}` |  |
+| `Create` | `POST` | `/api/v3/users` | `*` |
+| `Get` | `GET` | `/api/v3/users/{user_ids.user_id}` |  |
+| `Update` | `PUT` | `/api/v3/users/{user.ids.user_id}` | `*` |
+| `CreateTemporaryPassword` | `POST` | `/api/v3/users/{user_ids.user_id}/temporary_password` |  |
+| `UpdatePassword` | `PUT` | `/api/v3/users/{user_ids.user_id}/password` | `*` |
+| `Delete` | `DELETE` | `/api/v3/users/{user_id}` |  |
 
 ### <a name="ttn.lorawan.v3.UserSessionRegistry">Service `UserSessionRegistry`</a>
 
@@ -5042,8 +5172,8 @@ User is the message that defines an user on the network.
 
 | Method Name | Method | Pattern | Body |
 | ----------- | ------ | ------- | ---- |
-| `List` | `GET` | `/api/v3//users/{user_ids.user_id}/sessions` |  |
-| `Delete` | `DELETE` | `/api/v3//users/{user_ids.user_id}/sessions/{session_id}` |  |
+| `List` | `GET` | `/api/v3/users/{user_ids.user_id}/sessions` |  |
+| `Delete` | `DELETE` | `/api/v3/users/{user_ids.user_id}/sessions/{session_id}` |  |
 
 ## Scalar Value Types
 

@@ -33,7 +33,7 @@ type contactInfoStore struct {
 	*store
 }
 
-func (s *contactInfoStore) GetContactInfo(ctx context.Context, entityID *ttnpb.EntityIdentifiers) ([]*ttnpb.ContactInfo, error) {
+func (s *contactInfoStore) GetContactInfo(ctx context.Context, entityID ttnpb.Identifiers) ([]*ttnpb.ContactInfo, error) {
 	defer trace.StartRegion(ctx, "get contact info").End()
 	entity, err := s.findEntity(ctx, entityID, "id")
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *contactInfoStore) GetContactInfo(ctx context.Context, entityID *ttnpb.E
 	return pb, nil
 }
 
-func (s *contactInfoStore) SetContactInfo(ctx context.Context, entityID *ttnpb.EntityIdentifiers, pb []*ttnpb.ContactInfo) ([]*ttnpb.ContactInfo, error) {
+func (s *contactInfoStore) SetContactInfo(ctx context.Context, entityID ttnpb.Identifiers, pb []*ttnpb.ContactInfo) ([]*ttnpb.ContactInfo, error) {
 	defer trace.StartRegion(ctx, "update contact info").End()
 	entity, err := s.findEntity(ctx, entityID, "id")
 	if err != nil {
@@ -219,7 +219,7 @@ func (s *contactInfoStore) Validate(ctx context.Context, validation *ttnpb.Conta
 	}
 
 	if model.EntityType == "user" && model.ContactMethod == int(ttnpb.CONTACT_METHOD_EMAIL) {
-		err = s.query(ctx, User{}).Where(User{
+		err = s.query(ctx, User{
 			Model: Model{ID: model.EntityID},
 		}).Where(User{
 			PrimaryEmailAddress: model.Value,

@@ -17,7 +17,6 @@ import TTN from 'ttn-lw'
 
 import token from '../lib/access-token'
 import getCookieValue from '../../lib/cookie'
-import stubs from './stubs'
 
 const config = window.APP_CONFIG
 const stack = {
@@ -78,7 +77,9 @@ export default {
     'delete': ttnClient.Applications.deleteById.bind(ttnClient.Applications),
     create: ttnClient.Applications.create.bind(ttnClient.Applications),
     update: ttnClient.Applications.updateById.bind(ttnClient.Applications),
+    eventsSubscribe: ttnClient.Applications.openStream.bind(ttnClient.Applications),
     apiKeys: {
+      get: ttnClient.Applications.ApiKeys.getById.bind(ttnClient.Applications.ApiKeys),
       list: ttnClient.Applications.ApiKeys.getAll.bind(ttnClient.Applications.ApiKeys),
       update: ttnClient.Applications.ApiKeys.updateById.bind(ttnClient.Applications.ApiKeys),
       'delete': ttnClient.Applications.ApiKeys.deleteById.bind(ttnClient.Applications.ApiKeys),
@@ -99,13 +100,37 @@ export default {
   },
   devices: {
     list: ttnClient.Applications.Devices.getAll.bind(ttnClient.Applications.Devices),
+  },
+  device: {
     get: ttnClient.Applications.Devices.getById.bind(ttnClient.Applications.Devices),
+    create: ttnClient.Applications.Devices.create.bind(ttnClient.Applications.Devices),
+    update: ttnClient.Applications.Devices.updateById.bind(ttnClient.Applications.Devices),
+    eventsSubscribe: ttnClient.Applications.Devices.openStream.bind(ttnClient.Applications.Devices),
   },
   gateways: {
-    list: stubs.gateways.list,
-    search: stubs.gateways.search,
+    list: ttnClient.Gateways.getAll.bind(ttnClient.Gateways),
+  },
+  gateway: {
+    get: ttnClient.Gateways.getById.bind(ttnClient.Gateways),
+    'delete': ttnClient.Gateways.deleteById.bind(ttnClient.Gateways),
+    create: ttnClient.Gateways.create.bind(ttnClient.Gateways),
+    update: ttnClient.Gateways.updateById.bind(ttnClient.Gateways),
+    stats: ttnClient.Gateways.getStatisticsById.bind(ttnClient.Gateways),
+    eventsSubscribe: ttnClient.Gateways.openStream.bind(ttnClient.Gateways),
+    apiKeys: {
+      get: ttnClient.Gateways.ApiKeys.getById.bind(ttnClient.Gateways.ApiKeys),
+      list: ttnClient.Gateways.ApiKeys.getAll.bind(ttnClient.Gateways.ApiKeys),
+      update: ttnClient.Gateways.ApiKeys.updateById.bind(ttnClient.Gateways.ApiKeys),
+      'delete': ttnClient.Gateways.ApiKeys.deleteById.bind(ttnClient.Gateways.ApiKeys),
+      create: ttnClient.Gateways.ApiKeys.create.bind(ttnClient.Gateways.ApiKeys),
+    },
   },
   rights: {
     applications: ttnClient.Applications.getRightsById.bind(ttnClient.Applications),
+    gateways: ttnClient.Gateways.getRightsById.bind(ttnClient.Gateways),
+  },
+  configuration: {
+    listNsFrequencyPlans: ttnClient.Configuration.listNsFrequencyPlans.bind(ttnClient.Configuration),
+    listGsFrequencyPlans: ttnClient.Configuration.listGsFrequencyPlans.bind(ttnClient.Configuration),
   },
 }

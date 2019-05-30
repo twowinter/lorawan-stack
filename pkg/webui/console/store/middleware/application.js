@@ -14,8 +14,11 @@
 
 import { createLogic } from 'redux-logic'
 
+import { isNotFoundError } from '../../../lib/errors/utils'
 import api from '../../api'
 import * as application from '../actions/application'
+import * as link from '../actions/link'
+import createEventsConnectLogics from './events'
 
 const getApplicationLogic = createLogic({
   type: [ application.GET_APP ],
@@ -33,10 +36,7 @@ const getApplicationLogic = createLogic({
 })
 
 const getApplicationApiKeysLogic = createLogic({
-  type: [
-    application.GET_APP_API_KEYS_LIST,
-    application.GET_APP_API_KEY_PAGE_DATA,
-  ],
+  type: application.GET_APP_API_KEYS_LIST,
   async process ({ getState, action }, dispatch, done) {
     const { id, params } = action
     try {
@@ -50,6 +50,21 @@ const getApplicationApiKeysLogic = createLogic({
       )
     } catch (e) {
       dispatch(application.getApplicationApiKeysListFailure(id, e))
+    }
+
+    done()
+  },
+})
+
+const getApplicationApiKeyLogic = createLogic({
+  type: application.GET_APP_API_KEY,
+  async process ({ action }, dispatch, done) {
+    const { entityId, keyId } = action
+    try {
+      const key = await api.application.apiKeys.get(entityId, keyId)
+      dispatch(application.getApplicationApiKeySuccess(key))
+    } catch (error) {
+      dispatch(application.getApplicationApiKeyFailure(error))
     }
 
     done()
@@ -94,8 +109,38 @@ const getApplicationCollaboratorsLogic = createLogic({
   },
 })
 
+const getApplicationLinkLogic = createLogic({
+  type: link.GET_APP_LINK,
+  async process ({ action }, dispatch, done) {
+    const { id, meta = {}} = action
+    const { selectors = []} = meta
+
+    let linkResult
+    let statsResult
+    try {
+      linkResult = await api.application.link.get(id, selectors)
+      statsResult = await api.application.link.stats(id)
+
+      dispatch(link.getApplicationLinkSuccess(linkResult, statsResult, true))
+    } catch (error) {
+      // consider errors that are not 404, since not found means that the
+      // application is not linked.
+      if (isNotFoundError(error)) {
+        dispatch(link.getApplicationLinkSuccess(linkResult, statsResult, false))
+      } else {
+        dispatch(link.getApplicationLinkFailure(error))
+      }
+    }
+
+    done()
+  },
+})
+
 export default [
   getApplicationLogic,
   getApplicationApiKeysLogic,
+  getApplicationApiKeyLogic,
   getApplicationCollaboratorsLogic,
+  ...createEventsConnectLogics(application.SHARED_NAME, 'application'),
+  getApplicationLinkLogic,
 ]

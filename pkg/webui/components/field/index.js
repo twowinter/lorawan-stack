@@ -25,6 +25,7 @@ import Input from '../input'
 import Checkbox from '../checkbox'
 import Select from '../select'
 import RadioButton from '../radio-button'
+import CodeEditor from '../code-editor'
 import Message from '../../lib/components/message'
 
 import style from './field.styl'
@@ -73,6 +74,7 @@ const selectAllowedProps = [
   'isMulti',
   'isRtl',
   'isSearchable',
+  'isLoading',
   'onChange',
   'options',
   'placeholder',
@@ -80,6 +82,19 @@ const selectAllowedProps = [
   'selectProps',
   'setValue',
   'value',
+  'menuPlacement',
+]
+
+const codeAllowedProps = [
+  'name',
+  'height',
+  'value',
+  'onChange',
+  'onBlur',
+  'onFocus',
+  'minLines',
+  'maxLines',
+  'disabled',
 ]
 
 const getAllowedPropsByType = function (type) {
@@ -89,6 +104,8 @@ const getAllowedPropsByType = function (type) {
     return checkboxAllowedProps
   case 'select':
     return selectAllowedProps
+  case 'code':
+    return codeAllowedProps
   default:
     return inputAllowedProps
   }
@@ -117,10 +134,14 @@ const component = function (type) {
   case 'number':
   case 'password':
   case 'byte':
+  case 'textarea':
     return Input
 
   case 'select':
     return Select
+
+  case 'code':
+    return CodeEditor
 
   default:
     warn('No type matches', type)
@@ -133,6 +154,7 @@ const Field = function (props) {
     className,
     type = 'text',
     name = '',
+    key = props.name,
     touches = props.name,
     title,
     placeholder = props.title,
@@ -162,9 +184,9 @@ const Field = function (props) {
   }
 
   const handleBlur = function (e) {
-    // Always regard inputs that never received a value as untouched (better UX)
-    if (e.target.value !== '' && validateOnBlur) {
-      setFieldTouched(touches, true)
+    if (validateOnBlur) {
+      // Always regard inputs that never received a value as untouched (better UX)
+      setFieldTouched(touches, e.target.value !== '')
     }
   }
 
@@ -176,7 +198,7 @@ const Field = function (props) {
     rest.onChange = handleChange
     rest.onBlur = handleBlur
     _error = touched && rest.error
-
+    rest.value = rest.value || ''
   }
 
   // Dismiss non boolean values for checkboxes
@@ -193,7 +215,7 @@ const Field = function (props) {
   rest.type = type
   rest.placeholder = placeholder ? formatMessage(placeholder) : ''
 
-  const hasMessages = touched && (_error || warning)
+  const hasMessages = (touched && _error) || warning
 
   const classname = classnames(className, style.field, style[type], ...from(style, {
     error: rest.error,
@@ -215,6 +237,7 @@ const Field = function (props) {
       <Component
         className={style.component}
         id={id}
+        key={key}
         {...filterPropsByType(type, rest)}
       />
       {hasMessages

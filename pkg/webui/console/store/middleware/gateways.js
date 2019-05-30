@@ -20,20 +20,22 @@ import * as gateways from '../actions/gateways'
 const getGatewaysLogic = createLogic({
   type: [
     gateways.GET_GTWS_LIST,
-    gateways.CHANGE_GTWS_ORDER,
-    gateways.CHANGE_GTWS_PAGE,
     gateways.SEARCH_GTWS_LIST,
   ],
   latest: true,
   async process ({ getState, action }, dispatch, done) {
-    const { filters } = action
+    const { page, pageSize: limit, query } = action.filters
 
     try {
-      const data = filters.query
-        ? await api.gateways.search(filters)
-        : await api.gateways.list(filters)
-      const gtws = data.gateways.map(g => ({ ...g, antennasCount: g.antennas.length }))
-      dispatch(gateways.getGatewaysSuccess(gtws, data.totalCount))
+      const data = query
+        ? await api.gateways.search({
+          page,
+          limit,
+          id_contains: query,
+          name_contains: query,
+        })
+        : await api.gateways.list({ page, limit }, [ 'name,description,frequency_plan_id' ])
+      dispatch(gateways.getGatewaysSuccess(data.gateways, data.totalCount))
     } catch (error) {
       dispatch(gateways.getGatewaysFailure(error))
     }
@@ -42,6 +44,23 @@ const getGatewaysLogic = createLogic({
   },
 })
 
+const getGatewaysRightsLogic = createLogic({
+  type: gateways.GET_GTWS_RIGHTS_LIST,
+  async process ({ action }, dispatch, done) {
+    const { id } = action
+    try {
+      const result = await api.rights.gateways(id)
+
+      dispatch(gateways.getGatewaysRightsListSuccess(result.rights.sort()))
+    } catch (error) {
+      dispatch(gateways.getGatewaysRightsListFailure(error))
+    }
+
+    done()
+  },
+})
+
 export default [
   getGatewaysLogic,
+  getGatewaysRightsLogic,
 ]

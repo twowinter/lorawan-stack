@@ -252,6 +252,17 @@ var ListGatewayAPIKeysRequestFieldPathsTopLevel = []string{
 	"limit",
 	"page",
 }
+var GetGatewayAPIKeyRequestFieldPathsNested = []string{
+	"gateway_ids",
+	"gateway_ids.eui",
+	"gateway_ids.gateway_id",
+	"key_id",
+}
+
+var GetGatewayAPIKeyRequestFieldPathsTopLevel = []string{
+	"gateway_ids",
+	"key_id",
+}
 var CreateGatewayAPIKeyRequestFieldPathsNested = []string{
 	"gateway_ids",
 	"gateway_ids.eui",
@@ -362,6 +373,11 @@ var GatewayConnectionStatsFieldPathsNested = []string{
 	"last_status_received_at",
 	"last_uplink_received_at",
 	"protocol",
+	"round_trip_times",
+	"round_trip_times.count",
+	"round_trip_times.max",
+	"round_trip_times.median",
+	"round_trip_times.min",
 	"uplink_count",
 }
 
@@ -373,6 +389,7 @@ var GatewayConnectionStatsFieldPathsTopLevel = []string{
 	"last_status_received_at",
 	"last_uplink_received_at",
 	"protocol",
+	"round_trip_times",
 	"uplink_count",
 }
 var GatewayRadio_TxConfigurationFieldPathsNested = []string{
@@ -385,4 +402,17 @@ var GatewayRadio_TxConfigurationFieldPathsTopLevel = []string{
 	"max_frequency",
 	"min_frequency",
 	"notch_frequency",
+}
+var GatewayConnectionStats_RoundTripTimesFieldPathsNested = []string{
+	"count",
+	"max",
+	"median",
+	"min",
+}
+
+var GatewayConnectionStats_RoundTripTimesFieldPathsTopLevel = []string{
+	"count",
+	"max",
+	"median",
+	"min",
 }

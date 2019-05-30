@@ -24,22 +24,14 @@ import IntlHelmet from '../../../lib/components/intl-helmet'
 import Message from '../../../lib/components/message'
 import DataSheet from '../../../components/data-sheet'
 import DateTime from '../../../lib/components/date-time'
+import DeviceEvents from '../../containers/device-events'
 
 import style from './device-overview.styl'
 
 const m = defineMessages({
-  hardware: 'Hardware',
-  brand: 'Brand',
-  model: 'Model',
-  hardwareVersion: 'Hardware version',
-  firmwareVersion: 'Firmware Version',
-  activationInfo: 'Activation Info',
+  activationInfo: 'Activation Information',
   rootKeyId: 'Root Key ID',
-  sessionInfo: 'Session Info',
-  fwdNtwkKey: 'FNwkSIntKey',
-  sNtwkSIKey: 'SNwkSIntKey',
-  ntwkSEncKey: 'NwkSEncKey',
-  appSKey: 'AppSKey',
+  sessionInfo: 'Session Information',
   latestData: 'Latest Data',
 })
 
@@ -85,12 +77,12 @@ class DeviceOverview extends React.Component {
     // Add version info, if it is available
     if (Object.keys(version_ids).length > 0) {
       sheetData.push({
-        header: m.hardware,
+        header: sharedMessages.hardware,
         items: [
-          { key: m.brand, value: version_ids.brand_id },
-          { key: m.model, value: version_ids.model_id },
-          { key: m.hardwareVersion, value: version_ids.hardware_version },
-          { key: m.firmwareVersion, value: version_ids.firmware_version },
+          { key: sharedMessages.brand, value: version_ids.brand_id },
+          { key: sharedMessages.model, value: version_ids.model_id },
+          { key: sharedMessages.hardwareVersion, value: version_ids.hardware_version },
+          { key: sharedMessages.firmwareVersion, value: version_ids.firmware_version },
         ],
       })
     }
@@ -112,8 +104,8 @@ class DeviceOverview extends React.Component {
         type: 'code',
         sensitive: false,
         subItems: [
-          { key: sharedMessages.appKey, value: root_keys.app_key.key, type: 'code', sensitive: true },
-          { key: sharedMessages.networkKey, value: root_keys.nwk_key.key, type: 'code', sensitive: true },
+          { key: sharedMessages.appKey, value: root_keys.app_key.key, type: 'byte', sensitive: true },
+          { key: sharedMessages.nwkKey, value: root_keys.nwk_key.key, type: 'byte', sensitive: true },
         ],
       })
     }
@@ -124,10 +116,10 @@ class DeviceOverview extends React.Component {
       header: m.sessionInfo,
       items: [
         { key: sharedMessages.devAddr, value: ids.dev_addr, type: 'byte', sensitive: false },
-        { key: m.fwdNtwkKey, value: f_nwk_s_int_key.key, type: 'code', sensitive: true },
-        { key: m.sNtwkSIKey, value: s_nwk_s_int_key.key, type: 'code', sensitive: true },
-        { key: m.ntwkSEncKey, value: nwk_s_enc_key.key, type: 'code', sensitive: true },
-        { key: m.appSKey, value: app_s_key.key, type: 'code', sensitive: true },
+        { key: sharedMessages.fwdNtwkKey, value: f_nwk_s_int_key.key, type: 'code', sensitive: true },
+        { key: sharedMessages.sNtwkSIKey, value: s_nwk_s_int_key.key, type: 'code', sensitive: true },
+        { key: sharedMessages.ntwkSEncKey, value: nwk_s_enc_key.key, type: 'code', sensitive: true },
+        { key: sharedMessages.appSKey, value: app_s_key.key, type: 'code', sensitive: true },
       ],
     })
 
@@ -141,6 +133,9 @@ class DeviceOverview extends React.Component {
   }
 
   render () {
+    const { device } = this.props
+    const devIds = device && device.ids
+
     return (
       <Container>
         <IntlHelmet
@@ -151,14 +146,7 @@ class DeviceOverview extends React.Component {
             {this.deviceInfo}
           </Col>
           <Col md={12} lg={6}>
-            <div className={style.activityPlaceholder}>
-              <h4><Message content={m.latestData} /></h4>
-              <div>Activity Panel Placeholder</div>
-            </div>
-            <div className={style.locationPlaceholder}>
-              <h4><Message content={sharedMessages.location} /></h4>
-              <div>Location Map Placeholder</div>
-            </div>
+            <DeviceEvents devIds={devIds} widget />
           </Col>
         </Row>
       </Container>

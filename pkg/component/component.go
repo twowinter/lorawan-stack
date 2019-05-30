@@ -18,9 +18,11 @@ package component
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"sort"
+	"strings"
 	"syscall"
 
 	"github.com/getsentry/raven-go"
@@ -31,11 +33,13 @@ import (
 	"go.thethings.network/lorawan-stack/pkg/crypto"
 	"go.thethings.network/lorawan-stack/pkg/fillcontext"
 	"go.thethings.network/lorawan-stack/pkg/frequencyplans"
+	"go.thethings.network/lorawan-stack/pkg/interop"
 	"go.thethings.network/lorawan-stack/pkg/log"
 	"go.thethings.network/lorawan-stack/pkg/log/middleware/sentry"
 	"go.thethings.network/lorawan-stack/pkg/rpcserver"
 	"go.thethings.network/lorawan-stack/pkg/version"
 	"go.thethings.network/lorawan-stack/pkg/web"
+	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
 )
 
@@ -53,17 +57,22 @@ type Component struct {
 	config        *Config
 	getBaseConfig func(ctx context.Context) config.ServiceBase
 
+	acme *autocert.Manager
+
 	logger log.Stack
 	sentry *raven.Client
 
 	cluster    cluster.Cluster
-	clusterNew func(ctx context.Context, config *config.ServiceBase, services ...rpcserver.Registerer) (cluster.Cluster, error)
+	clusterNew func(ctx context.Context, config *config.Cluster, options ...cluster.Option) (cluster.Cluster, error)
 
 	grpc           *rpcserver.Server
 	grpcSubsystems []rpcserver.Registerer
 
 	web           *web.Server
 	webSubsystems []web.Registerer
+
+	interop           *interop.Server
+	interopSubsystems []interop.Registerer
 
 	healthHandler healthcheck.Handler
 
@@ -88,7 +97,7 @@ type Option func(*Component)
 // setting up the cluster.
 // This allows extending the cluster configuration with custom logic based on
 // information in the context.
-func WithClusterNew(f func(ctx context.Context, config *config.ServiceBase, services ...rpcserver.Registerer) (cluster.Cluster, error)) Option {
+func WithClusterNew(f func(ctx context.Context, config *config.Cluster, options ...cluster.Option) (cluster.Cluster, error)) Option {
 	return func(c *Component) {
 		c.clusterNew = f
 	}
@@ -141,6 +150,15 @@ func New(logger log.Stack, config *Config, opts ...Option) (*Component, error) {
 	}
 
 	c.web, err = web.New(c.ctx, config.HTTP)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.initACME(); err != nil {
+		return nil, err
+	}
+
+	c.interop, err = interop.New(c.ctx, config.Interop)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +240,11 @@ func (c *Component) Start() (err error) {
 		sub.RegisterRoutes(c.web)
 	}
 
+	c.logger.Debug("Initializing interop server...")
+	for _, sub := range c.interopSubsystems {
+		sub.RegisterInterop(c.interop)
+	}
+
 	if c.grpc != nil {
 		c.logger.Debug("Starting gRPC server...")
 		if err = c.listenGRPC(); err != nil {
@@ -231,12 +254,18 @@ func (c *Component) Start() (err error) {
 	}
 	c.logger.Debug("Started gRPC server")
 
-	c.logger.Debug("Starting HTTP server...")
+	c.logger.Debug("Starting web server...")
 	if err = c.listenWeb(); err != nil {
-		c.logger.WithError(err).Error("Could not start HTTP server")
+		c.logger.WithError(err).Error("Could not start web server")
 		return err
 	}
-	c.logger.Debug("Started HTTP server")
+	c.logger.Debug("Started web server")
+
+	c.logger.Debug("Starting interop server")
+	if err = c.listenInterop(); err != nil {
+		c.logger.WithError(err).Error("Could not start interop server")
+	}
+	c.logger.Debug("Started interop server")
 
 	c.logger.Debug("Initializing cluster...")
 	if err := c.initCluster(); err != nil {
@@ -309,4 +338,15 @@ func (c *Component) Close() {
 // over insecure transports.
 func (c *Component) AllowInsecureForCredentials() bool {
 	return c.config.GRPC.AllowInsecureForCredentials
+}
+
+// ServeHTTP serves an HTTP request.
+// If the Content-Type is application/grpc, the request is routed to gRPC.
+// Otherwise, the request is routed to the default web server.
+func (c *Component) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+		c.grpc.Server.ServeHTTP(w, r)
+	} else {
+		c.web.ServeHTTP(w, r)
+	}
 }

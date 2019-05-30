@@ -24,6 +24,7 @@ import (
 	"go.thethings.network/lorawan-stack/pkg/auth/rights"
 	"go.thethings.network/lorawan-stack/pkg/errors"
 	"go.thethings.network/lorawan-stack/pkg/gatewayserver/io"
+	"go.thethings.network/lorawan-stack/pkg/gatewayserver/scheduling"
 	"go.thethings.network/lorawan-stack/pkg/log"
 	"go.thethings.network/lorawan-stack/pkg/ttnpb"
 	encoding "go.thethings.network/lorawan-stack/pkg/ttnpb/udp"
@@ -231,9 +232,10 @@ func (s *srv) handleUp(ctx context.Context, state *state, packet encoding.Packet
 		IP: packet.GatewayAddr.IP.String(),
 	}
 
+	now := time.Now()
 	switch packet.PacketType {
 	case encoding.PullData:
-		atomic.StoreInt64(&state.lastSeenPull, time.Now().UnixNano())
+		atomic.StoreInt64(&state.lastSeenPull, now.UnixNano())
 		state.lastDownlinkPath.Store(downlinkPath{
 			addr:    *packet.GatewayAddr,
 			version: packet.ProtocolVersion,
@@ -245,7 +247,7 @@ func (s *srv) handleUp(ctx context.Context, state *state, packet encoding.Packet
 		state.startHandleDownMu.RUnlock()
 
 	case encoding.PushData:
-		atomic.StoreInt64(&state.lastSeenPush, time.Now().UnixNano())
+		atomic.StoreInt64(&state.lastSeenPush, now.UnixNano())
 		if len(packet.Data.RxPacket) > 0 {
 			var timestamp uint32
 			for _, pkt := range packet.Data.RxPacket {
@@ -253,7 +255,9 @@ func (s *srv) handleUp(ctx context.Context, state *state, packet encoding.Packet
 					timestamp = pkt.Tmst
 				}
 			}
-			state.syncClock(timestamp)
+			state.clockMu.Lock()
+			state.clock.Sync(timestamp, now)
+			state.clockMu.Unlock()
 		}
 		msg, err := encoding.ToGatewayUp(*packet.Data, md)
 		if err != nil {
@@ -273,7 +277,7 @@ func (s *srv) handleUp(ctx context.Context, state *state, packet encoding.Packet
 		}
 
 	case encoding.TxAck:
-		atomic.StoreInt64(&state.lastSeenPull, time.Now().UnixNano())
+		atomic.StoreInt64(&state.lastSeenPull, now.UnixNano())
 		if atomic.CompareAndSwapUint32(&state.receivedTxAck, 0, 1) {
 			logger.Debug("Received Tx acknowledgement, JIT queue supported")
 		}
@@ -292,12 +296,16 @@ func (s *srv) handleUp(ctx context.Context, state *state, packet encoding.Packet
 				},
 			}
 		}
-		if v, ok := state.correlations.Load(packet.Token); ok {
-			sent := v.(downlinkSent)
-			msg.TxAcknowledgment.CorrelationIDs = sent.correlationIDs
+		var rtt *time.Duration
+		if cids, delta, ok := state.tokens.Get(uint16(packet.Token[0])<<8|uint16(packet.Token[1]), packet.ReceivedAt); ok {
+			msg.TxAcknowledgment.CorrelationIDs = cids
+			rtt = &delta
 		}
 		if err := state.io.HandleTxAck(msg.TxAcknowledgment); err != nil {
 			logger.WithError(err).Warn("Failed to handle Tx acknowledgement")
+		}
+		if rtt != nil {
+			state.io.RecordRTT(*rtt)
 		}
 		// TODO: Send event to NS (https://github.com/TheThingsNetwork/lorawan-stack/issues/76)
 	}
@@ -338,41 +346,41 @@ func (s *srv) handleDown(ctx context.Context, state *state) error {
 				GatewayAddr:     &downlinkPath.addr,
 				ProtocolVersion: downlinkPath.version,
 				PacketType:      encoding.PullResp,
-				Token:           state.nextToken(),
 				Data: &encoding.Data{
 					TxPacket: tx,
 				},
 			}
-			state.correlations.Store(packet.Token, downlinkSent{
-				correlationIDs: down.CorrelationIDs,
-				sent:           time.Now(),
-			})
 			write := func() {
 				logger.Debug("Write downlink message")
+				token := state.tokens.Next(down.CorrelationIDs, time.Now())
+				packet.Token = [2]byte{byte(token >> 8), byte(token)}
 				if err := s.write(packet); err != nil {
 					logger.WithError(err).Warn("Failed to write downlink message")
 					// TODO: Report to Network Server: https://github.com/TheThingsNetwork/lorawan-stack/issues/76
 				}
 			}
 			canImmediate := atomic.LoadUint32(&state.receivedTxAck) == 1
-			preferLate := state.io.Gateway().ScheduleDownlinkLate
-			if canImmediate || !preferLate {
+			forceLate := state.io.Gateway().ScheduleDownlinkLate
+			if canImmediate && !forceLate {
 				write()
 				break
 			}
-			gatewayTime, err := state.clock(tx.Tmst)
-			if err != nil {
-				logger.Warn("Schedule late preferred but no gateway clock available")
+			state.clockMu.RLock()
+			if !state.clock.IsSynced() {
+				state.clockMu.RUnlock()
+				logger.Warn("Schedule late forced but no gateway clock available")
 				write()
 				break
 			}
-			d := time.Until(gatewayTime.Add(-s.config.ScheduleLateTime))
+			serverTime := state.clock.ToServerTime(state.clock.FromTimestampTime(tx.Tmst))
+			state.clockMu.RUnlock()
+			d := time.Until(serverTime.Add(-s.config.ScheduleLateTime))
 			logger.WithField("duration", d).Debug("Wait to schedule downlink message late")
 			time.AfterFunc(d, write)
 		case <-healthCheck.C:
 			lastSeenPull := time.Unix(0, atomic.LoadInt64(&state.lastSeenPull))
 			if time.Since(lastSeenPull) > s.config.DownlinkPathExpires {
-				logger.Warn("Downlink path expired")
+				logger.Debug("Downlink path expired")
 				s.server.UnclaimDownlink(ctx, state.io.Gateway().GatewayIdentifiers)
 				state.lastDownlinkPath.Store(downlinkPath{})
 				state.startHandleDownMu.Lock()
@@ -411,26 +419,11 @@ var errConnectionExpired = errors.Define("connection_expired", "connection expir
 func (s *srv) gc() {
 	logger := log.FromContext(s.ctx)
 	connectionsTicker := time.NewTicker(s.config.ConnectionExpires / 2)
-	correlationsTicker := time.NewTicker(tokenExpiration)
 	for {
 		select {
 		case <-s.ctx.Done():
 			connectionsTicker.Stop()
-			correlationsTicker.Stop()
 			return
-		case <-correlationsTicker.C:
-			start := time.Now()
-			s.connections.Range(func(_, v interface{}) bool {
-				state := v.(*state)
-				state.correlations.Range(func(k, v interface{}) bool {
-					ds := v.(downlinkSent)
-					if start.Sub(ds.sent) > tokenExpiration {
-						state.correlations.Delete(k)
-					}
-					return true
-				})
-				return true
-			})
 		case <-connectionsTicker.C:
 			s.connections.Range(func(k, v interface{}) bool {
 				state := v.(*state)
@@ -440,7 +433,7 @@ func (s *srv) gc() {
 					if time.Since(lastSeenPush) > s.config.ConnectionExpires {
 						select {
 						case <-state.ioWait:
-							logger.WithField("gateway_eui", k.(types.EUI64)).Warn("Connection expired")
+							logger.WithField("gateway_eui", k.(types.EUI64)).Debug("Connection expired")
 							s.connections.Delete(k)
 							state.io.Disconnect(errConnectionExpired)
 						default:
@@ -459,57 +452,23 @@ type downlinkPath struct {
 }
 
 type state struct {
-	// Align for sync/atomic, time are Unix ns
-	timeOffset    int64
+	// Align for sync/atomic, timestamps are Unix ns.
 	lastSeenPull  int64
 	lastSeenPush  int64
 	receivedTxAck uint32
-	pullRespToken uint32
 
 	ioWait chan struct{}
 	io     *io.Connection
 	ioErr  error
 
+	clock   scheduling.RolloverClock
+	clockMu sync.RWMutex
+
 	lastDownlinkPath  atomic.Value // downlinkPath
 	startHandleDown   *sync.Once
 	startHandleDownMu sync.RWMutex
 
-	correlations sync.Map
-}
-
-type downlinkSent struct {
-	correlationIDs []string
-	sent           time.Time
-}
-
-func (s *state) nextToken() [2]byte {
-	val := atomic.AddUint32(&s.pullRespToken, 1)
-	return [2]byte{byte(val >> 8 & 0xff), byte(val & 0xff)}
+	tokens io.DownlinkTokens
 }
 
 var errNoClock = errors.DefineUnavailable("no_clock_sync", "no clock sync")
-
-// clock gets the synchronized time for a timestamp (in microseconds). The clock should be synchronized using
-// syncClock, otherwise an error is returned.
-func (s *state) clock(timestamp uint32) (t time.Time, err error) {
-	offset := atomic.LoadInt64(&s.timeOffset)
-	if offset == 0 {
-		return time.Time{}, errNoClock
-	}
-	t = time.Unix(0, 0)
-	t = t.Add(time.Duration(int64(timestamp)*1000 + offset))
-	if t.Before(time.Now()) {
-		t = t.Add(time.Duration(int64(1<<32) * 1000))
-	}
-	return
-}
-
-// syncClock synchronizes the clock with the timestamp (in microseconds) and the local system time.
-func (s *state) syncClock(timestamp uint32) {
-	t := time.Now().Add(-time.Duration(timestamp) * time.Microsecond)
-	log.FromContext(s.io.Context()).WithFields(log.Fields(
-		"time", t,
-		"timestamp", timestamp,
-	)).Debug("Synchronized gateway timestamp")
-	atomic.StoreInt64(&s.timeOffset, t.UnixNano())
-}

@@ -40,6 +40,7 @@ class Applications {
 
     this.ApiKeys = new ApiKeys(api.ApplicationAccess, {
       parentRoutes: {
+        get: 'application_ids.application_id',
         list: 'application_ids.application_id',
         create: 'application_ids.application_id',
         update: 'application_ids.application_id',
@@ -136,9 +137,11 @@ class Applications {
   // Delete
 
   async deleteById (applicationId) {
-    return this._api.ApplicationRegistry.Delete({
+    const response = await this._api.ApplicationRegistry.Delete({
       routeParams: { application_id: applicationId },
     })
+
+    return Marshaler.payloadSingleResponse(response)
   }
 
   async getRightsById (applicationId) {

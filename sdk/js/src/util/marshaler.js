@@ -13,6 +13,7 @@
 // limitations under the License.
 
 /* eslint-disable no-invalid-this */
+/* eslint-disable array-callback-return */
 
 import traverse from 'traverse'
 import queryString from 'query-string'
@@ -98,8 +99,28 @@ class Marshaler {
     return this.payloadSingleResponse(result, transform)
   }
 
+  static unwrapGateways (result, transform) {
+    return this.payloadListResponse('gateways', result, transform)
+  }
+
+  static unwrapGateway (result, transform) {
+    return this.payloadSingleResponse(result, transform)
+  }
+
   static fieldMaskFromPatch (patch) {
-    return traverse(patch).paths().slice(1).map( e => e.join('.') )
+    const paths = []
+
+    traverse(patch).map(function (x) {
+      if (this.node instanceof Array) {
+        // Do not consider array elements and do not recurse into them
+        this.update(undefined, true)
+      }
+      if (!this.isRoot) {
+        paths.push(this.path.join('.'))
+      }
+    })
+
+    return paths
   }
 
   /** This function will convert a paths object to a proper field mask.

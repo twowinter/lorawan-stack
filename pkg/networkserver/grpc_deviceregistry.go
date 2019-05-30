@@ -238,15 +238,17 @@ func (ns *NetworkServer) Set(ctx context.Context, req *ttnpb.SetEndDeviceRequest
 		}
 
 		if ttnpb.HasAnyField(sets, "session.started_at") && req.EndDevice.GetSession().GetStartedAt().IsZero() {
-			return nil, nil, errInvalidFieldValue.WithAttributes("field", "session.started_at")
+			return nil, nil, errInvalidFieldValue.WithAttributes("field", "session.tarted_at")
 		} else if !ttnpb.HasAnyField(sets, "session.started_at") {
 			req.EndDevice.Session.StartedAt = time.Now().UTC()
 			sets = append(sets, "session.started_at")
 		}
 
-		if err := resetMACState(&req.EndDevice, ns.FrequencyPlans, ns.defaultMACSettings); err != nil {
+		macState, err := newMACState(&req.EndDevice, ns.FrequencyPlans, ns.defaultMACSettings)
+		if err != nil {
 			return nil, nil, err
 		}
+		req.EndDevice.MACState = macState
 		sets = append(sets, "mac_state")
 
 		return &req.EndDevice, sets, nil

@@ -20,6 +20,8 @@ import application from './application'
 import devices from './devices'
 import device from './device'
 import gateways from './gateways'
+import gateway from './gateway'
+import configuration from './configuration'
 
 export default [
   client,
@@ -30,4 +32,6 @@ export default [
   ...devices,
   ...device,
   ...gateways,
+  ...gateway,
+  ...configuration,
 ]

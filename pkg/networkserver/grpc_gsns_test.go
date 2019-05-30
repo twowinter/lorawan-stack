@@ -65,26 +65,26 @@ type UplinkHandler interface {
 	HandleUplink(context.Context, *ttnpb.UplinkMessage) (*pbtypes.Empty, error)
 }
 
-func sendUplinkDuplicates(t *testing.T, h UplinkHandler, windowEndCh chan windowEnd, ctx context.Context, msg *ttnpb.UplinkMessage, n int) []*ttnpb.RxMetadata {
+func sendUplinkDuplicates(t *testing.T, h UplinkHandler, windowEndCh chan WindowEndRequest, ctx context.Context, msg *ttnpb.UplinkMessage, n int) []*ttnpb.RxMetadata {
 	t.Helper()
 
 	a := assertions.New(t)
 
-	var weCh chan<- time.Time
+	var weResp chan<- time.Time
 	select {
-	case we := <-windowEndCh:
+	case weReq := <-windowEndCh:
 		msg := CopyUplinkMessage(msg)
 
-		a.So(we.msg.ReceivedAt, should.HappenBefore, time.Now())
-		msg.ReceivedAt = we.msg.ReceivedAt
+		a.So(weReq.Message.ReceivedAt, should.HappenBefore, time.Now())
+		msg.ReceivedAt = weReq.Message.ReceivedAt
 
-		a.So(we.msg.CorrelationIDs, should.NotBeEmpty)
-		msg.CorrelationIDs = we.msg.CorrelationIDs
+		a.So(weReq.Message.CorrelationIDs, should.NotBeEmpty)
+		msg.CorrelationIDs = weReq.Message.CorrelationIDs
 
-		a.So(we.msg, should.Resemble, msg)
-		a.So(we.ctx, should.HaveParentContext, ctx)
+		a.So(weReq.Message, should.Resemble, msg)
+		a.So(weReq.Context, should.HaveParentContext, ctx)
 
-		weCh = we.ch
+		weResp = weReq.Response
 
 	case <-time.After(Timeout):
 		t.Fatal("Timed out while waiting for window end request to arrive")
@@ -123,7 +123,7 @@ func sendUplinkDuplicates(t *testing.T, h UplinkHandler, windowEndCh chan window
 			}
 
 			select {
-			case weCh <- time.Now():
+			case weResp <- time.Now():
 
 			case <-time.After(Timeout):
 				t.Fatal("Timed out while waiting for metadata collection to stop")
@@ -141,12 +141,6 @@ func sendUplinkDuplicates(t *testing.T, h UplinkHandler, windowEndCh chan window
 		mds = append(mds, md)
 	}
 	return mds
-}
-
-type windowEnd struct {
-	ctx context.Context
-	msg *ttnpb.UplinkMessage
-	ch  chan<- time.Time
 }
 
 func handleUplinkTest() func(t *testing.T) {
@@ -167,7 +161,9 @@ func handleUplinkTest() func(t *testing.T) {
 					Devices:             devReg,
 					DeduplicationWindow: 42,
 					CooldownWindow:      42,
-					DownlinkTasks:       &MockDownlinkTaskQueue{},
+					DownlinkTasks: &MockDownlinkTaskQueue{
+						PopFunc: DownlinkTaskPopBlockFunc,
+					},
 				})).(*NetworkServer)
 			ns.FrequencyPlans = frequencyplans.NewStore(test.FrequencyPlansFetcher)
 			test.Must(nil, ns.Start())
@@ -191,7 +187,9 @@ func handleUplinkTest() func(t *testing.T) {
 					Devices:             devReg,
 					DeduplicationWindow: 42,
 					CooldownWindow:      42,
-					DownlinkTasks:       &MockDownlinkTaskQueue{},
+					DownlinkTasks: &MockDownlinkTaskQueue{
+						PopFunc: DownlinkTaskPopBlockFunc,
+					},
 				})).(*NetworkServer)
 			ns.FrequencyPlans = frequencyplans.NewStore(test.FrequencyPlansFetcher)
 			test.Must(nil, ns.Start())
@@ -277,7 +275,9 @@ func handleUplinkTest() func(t *testing.T) {
 					Devices:             devReg,
 					DeduplicationWindow: 42,
 					CooldownWindow:      42,
-					DownlinkTasks:       &MockDownlinkTaskQueue{},
+					DownlinkTasks: &MockDownlinkTaskQueue{
+						PopFunc: DownlinkTaskPopBlockFunc,
+					},
 				})).(*NetworkServer)
 			ns.FrequencyPlans = frequencyplans.NewStore(test.FrequencyPlansFetcher)
 			test.Must(nil, ns.Start())
@@ -371,8 +371,9 @@ func handleUplinkTest() func(t *testing.T) {
 					MACState: &ttnpb.MACState{
 						LoRaWANVersion: ttnpb.MAC_V1_0,
 						CurrentParameters: ttnpb.MACParameters{
-							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRAckLimit:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -397,8 +398,9 @@ func handleUplinkTest() func(t *testing.T) {
 							},
 						},
 						DesiredParameters: ttnpb.MACParameters{
-							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRAckLimit:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -478,8 +480,9 @@ func handleUplinkTest() func(t *testing.T) {
 					MACState: &ttnpb.MACState{
 						LoRaWANVersion: ttnpb.MAC_V1_0,
 						CurrentParameters: ttnpb.MACParameters{
-							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRAckLimit:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -506,6 +509,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DesiredParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -585,6 +589,7 @@ func handleUplinkTest() func(t *testing.T) {
 						CurrentParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -611,6 +616,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DesiredParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -698,6 +704,7 @@ func handleUplinkTest() func(t *testing.T) {
 						CurrentParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -724,6 +731,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DesiredParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -807,6 +815,7 @@ func handleUplinkTest() func(t *testing.T) {
 						CurrentParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -833,6 +842,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DesiredParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -923,6 +933,7 @@ func handleUplinkTest() func(t *testing.T) {
 						CurrentParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -949,6 +960,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DesiredParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -1053,6 +1065,7 @@ func handleUplinkTest() func(t *testing.T) {
 						CurrentParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -1079,6 +1092,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DesiredParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -1173,6 +1187,7 @@ func handleUplinkTest() func(t *testing.T) {
 						CurrentParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -1199,6 +1214,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DesiredParameters: ttnpb.MACParameters{
 							ADRAckLimit:  1,
 							ADRAckDelay:  1,
+							ADRNbTrans:   1,
 							Rx2Frequency: 100000,
 							Channels: []*ttnpb.MACParameters_Channel{
 								{
@@ -1405,14 +1421,24 @@ func handleUplinkTest() func(t *testing.T) {
 					a.So(ret, should.Resemble, pb)
 				}
 
-				deduplicationDoneCh := make(chan windowEnd, 1)
-				collectionDoneCh := make(chan windowEnd, 1)
+				deduplicationDoneCh := make(chan WindowEndRequest, 1)
+				defer func() {
+					close(deduplicationDoneCh)
+				}()
+
+				collectionDoneCh := make(chan WindowEndRequest, 1)
+				defer func() {
+					close(collectionDoneCh)
+				}()
 
 				type asSendReq struct {
 					up    *ttnpb.ApplicationUp
 					errch chan error
 				}
 				asSendCh := make(chan asSendReq)
+				defer func() {
+					close(asSendCh)
+				}()
 
 				type downlinkTasksAddRequest struct {
 					ctx     context.Context
@@ -1429,6 +1455,7 @@ func handleUplinkTest() func(t *testing.T) {
 						DeduplicationWindow: 42,
 						CooldownWindow:      42,
 						DownlinkTasks: &MockDownlinkTaskQueue{
+							PopFunc: DownlinkTaskPopBlockFunc,
 							AddFunc: func(ctx context.Context, devID ttnpb.EndDeviceIdentifiers, t time.Time, replace bool) error {
 								downlinkAddCh <- downlinkTasksAddRequest{
 									ctx:     ctx,
@@ -1440,16 +1467,8 @@ func handleUplinkTest() func(t *testing.T) {
 							},
 						},
 					},
-					WithDeduplicationDoneFunc(func(ctx context.Context, msg *ttnpb.UplinkMessage) <-chan time.Time {
-						ch := make(chan time.Time, 1)
-						deduplicationDoneCh <- windowEnd{ctx, msg, ch}
-						return ch
-					}),
-					WithCollectionDoneFunc(func(ctx context.Context, msg *ttnpb.UplinkMessage) <-chan time.Time {
-						ch := make(chan time.Time, 1)
-						collectionDoneCh <- windowEnd{ctx, msg, ch}
-						return ch
-					}),
+					WithCollectionDoneFunc(MakeWindowEndChFunc(collectionDoneCh)),
+					WithDeduplicationDoneFunc(MakeWindowEndChFunc(deduplicationDoneCh)),
 					WithASUplinkHandler(func(ctx context.Context, ids ttnpb.ApplicationIdentifiers, up *ttnpb.ApplicationUp) (bool, error) {
 						req := asSendReq{
 							up:    up,
@@ -1525,8 +1544,8 @@ func handleUplinkTest() func(t *testing.T) {
 						}
 						close(req.errch)
 
-					case we := <-collectionDoneCh:
-						close(we.ch)
+					case weReq := <-collectionDoneCh:
+						close(weReq.Response)
 						err := <-errch
 						a.So(err, should.BeNil)
 						t.Fatalf("Downlink (n)ack not sent to AS: %v", errors.Stack(err))
@@ -1558,8 +1577,8 @@ func handleUplinkTest() func(t *testing.T) {
 						}},
 					})
 
-				case we := <-collectionDoneCh:
-					close(we.ch)
+				case weReq := <-collectionDoneCh:
+					close(weReq.Response)
 					a.So(<-errch, should.BeNil)
 					t.Fatal("Uplink not sent to AS")
 
@@ -1585,10 +1604,11 @@ func handleUplinkTest() func(t *testing.T) {
 					pb.CreatedAt = ret.CreatedAt
 					pb.UpdatedAt = ret.UpdatedAt
 					if pb.MACState == nil {
-						err := ResetMACState(pb, ns.FrequencyPlans, ttnpb.MACSettings{})
+						macState, err := NewMACState(pb, ns.FrequencyPlans, ttnpb.MACSettings{})
 						if !a.So(err, should.BeNil) {
 							t.FailNow()
 						}
+						pb.MACState = macState
 					}
 					pb.MACState.RxWindowsAvailable = true
 					pb.MACState.PendingApplicationDownlink = nil
@@ -1620,7 +1640,6 @@ func handleUplinkTest() func(t *testing.T) {
 					t.FailNow()
 				}
 
-				close(deduplicationDoneCh)
 				close(asUpReq.errch)
 
 				select {
@@ -1635,7 +1654,6 @@ func handleUplinkTest() func(t *testing.T) {
 				}
 
 				_ = sendUplinkDuplicates(t, ns, collectionDoneCh, ctx, tc.UplinkMessage, DuplicateCount)
-				close(collectionDoneCh)
 
 				select {
 				case err := <-errch:
@@ -1648,19 +1666,14 @@ func handleUplinkTest() func(t *testing.T) {
 				t.Run("after cooldown window", func(t *testing.T) {
 					a := assertions.New(t)
 
-					deduplicationDoneCh = make(chan windowEnd, 1)
-					collectionDoneCh = make(chan windowEnd, 1)
-
 					errch := make(chan error, 1)
 					go func() {
 						_, err = ns.HandleUplink(ctx, CopyUplinkMessage(tc.UplinkMessage))
 						errch <- err
 					}()
 
-					if pb.GetMACSettings().GetResetsFCnt() == nil || !pb.MACSettings.ResetsFCnt.Value {
-						close(deduplicationDoneCh)
+					if pb.MACState != nil && pb.MACState.CurrentParameters.ADRNbTrans <= 1 {
 						_ = sendUplinkDuplicates(t, ns, collectionDoneCh, ctx, tc.UplinkMessage, DuplicateCount)
-						close(collectionDoneCh)
 
 						select {
 						case err := <-errch:
@@ -1676,15 +1689,15 @@ func handleUplinkTest() func(t *testing.T) {
 					if pb.MACState != nil && pb.MACState.PendingApplicationDownlink != nil {
 						select {
 						case req := <-asSendCh:
+							close(req.errch)
 							if tc.UplinkMessage.Payload.GetMACPayload().Ack {
 								a.So(req.up.GetDownlinkAck(), should.Resemble, pb.MACState.PendingApplicationDownlink)
 							} else {
 								a.So(req.up.GetDownlinkNack(), should.Resemble, pb.MACState.PendingApplicationDownlink)
 							}
-							close(req.errch)
 
-						case we := <-collectionDoneCh:
-							close(we.ch)
+						case weReq := <-collectionDoneCh:
+							close(weReq.Response)
 							a.So(<-errch, should.BeNil)
 							t.Fatal("Downlink (n)ack not sent to AS")
 
@@ -1714,8 +1727,8 @@ func handleUplinkTest() func(t *testing.T) {
 							}},
 						})
 
-					case we := <-collectionDoneCh:
-						close(we.ch)
+					case weReq := <-collectionDoneCh:
+						close(weReq.Response)
 						a.So(<-errch, should.BeNil)
 						t.Fatal("Uplink not sent to AS")
 
@@ -1723,7 +1736,6 @@ func handleUplinkTest() func(t *testing.T) {
 						t.Fatal("Timed out while waiting for uplink to be sent to AS")
 					}
 
-					close(deduplicationDoneCh)
 					close(asUpReq.errch)
 
 					select {
@@ -1753,28 +1765,6 @@ func handleUplinkTest() func(t *testing.T) {
 	}
 }
 
-var _ ttnpb.NsJsClient = &MockNsJsClient{}
-
-type MockNsJsClient struct {
-	*test.MockClientStream
-	HandleJoinFunc  func(context.Context, *ttnpb.JoinRequest, ...grpc.CallOption) (*ttnpb.JoinResponse, error)
-	GetNwkSKeysFunc func(context.Context, *ttnpb.SessionKeyRequest, ...grpc.CallOption) (*ttnpb.NwkSKeysResponse, error)
-}
-
-func (js *MockNsJsClient) HandleJoin(ctx context.Context, req *ttnpb.JoinRequest, opts ...grpc.CallOption) (*ttnpb.JoinResponse, error) {
-	if js.HandleJoinFunc == nil {
-		return nil, errors.New("HandleJoinFunc not set")
-	}
-	return js.HandleJoinFunc(ctx, req, opts...)
-}
-
-func (js *MockNsJsClient) GetNwkSKeys(ctx context.Context, req *ttnpb.SessionKeyRequest, opts ...grpc.CallOption) (*ttnpb.NwkSKeysResponse, error) {
-	if js.GetNwkSKeysFunc == nil {
-		return nil, errors.New("GetNwkSKeysFunc not set")
-	}
-	return js.GetNwkSKeysFunc(ctx, req, opts...)
-}
-
 func handleJoinTest() func(t *testing.T) {
 	return func(t *testing.T) {
 		authorizedCtx := clusterauth.NewContext(test.Context(), nil)
@@ -1793,7 +1783,9 @@ func handleJoinTest() func(t *testing.T) {
 					Devices:             devReg,
 					DeduplicationWindow: 42,
 					CooldownWindow:      42,
-					DownlinkTasks:       &MockDownlinkTaskQueue{},
+					DownlinkTasks: &MockDownlinkTaskQueue{
+						PopFunc: DownlinkTaskPopBlockFunc,
+					},
 				})).(*NetworkServer)
 			ns.FrequencyPlans = frequencyplans.NewStore(test.FrequencyPlansFetcher)
 			test.Must(nil, ns.Start())
@@ -1810,7 +1802,7 @@ func handleJoinTest() func(t *testing.T) {
 			UplinkMessage *ttnpb.UplinkMessage
 		}{
 			{
-				"1.1/nil session",
+				"1.1/no pending session",
 				&ttnpb.EndDevice{
 					LoRaWANVersion:    ttnpb.MAC_V1_1,
 					LoRaWANPHYVersion: ttnpb.PHY_V1_1_REV_B,
@@ -1837,7 +1829,7 @@ func handleJoinTest() func(t *testing.T) {
 				}(),
 			},
 			{
-				"1.1/active session",
+				"1.1/pending session",
 				&ttnpb.EndDevice{
 					LoRaWANVersion:    ttnpb.MAC_V1_1,
 					LoRaWANPHYVersion: ttnpb.PHY_V1_1_REV_B,
@@ -1848,8 +1840,8 @@ func handleJoinTest() func(t *testing.T) {
 						DeviceID:               DeviceID,
 					},
 					FrequencyPlanID: test.EUFrequencyPlanID,
-					Session:         ttnpb.NewPopulatedSession(test.Randy, false),
-					MACState:        ttnpb.NewPopulatedMACState(test.Randy, false),
+					PendingSession:  ttnpb.NewPopulatedSession(test.Randy, false),
+					PendingMACState: ttnpb.NewPopulatedMACState(test.Randy, false),
 				},
 				func() *ttnpb.UplinkMessage {
 					msg := ttnpb.NewPopulatedUplinkMessageJoinRequest(test.Randy)
@@ -1877,8 +1869,8 @@ func handleJoinTest() func(t *testing.T) {
 						DeviceID:               DeviceID,
 					},
 					FrequencyPlanID: test.EUFrequencyPlanID,
-					Session:         ttnpb.NewPopulatedSession(test.Randy, false),
-					MACState:        ttnpb.NewPopulatedMACState(test.Randy, false),
+					PendingSession:  ttnpb.NewPopulatedSession(test.Randy, false),
+					PendingMACState: ttnpb.NewPopulatedMACState(test.Randy, false),
 				},
 				func() *ttnpb.UplinkMessage {
 					msg := ttnpb.NewPopulatedUplinkMessageJoinRequest(test.Randy)
@@ -1906,8 +1898,8 @@ func handleJoinTest() func(t *testing.T) {
 						DeviceID:               DeviceID,
 					},
 					FrequencyPlanID: test.EUFrequencyPlanID,
-					Session:         ttnpb.NewPopulatedSession(test.Randy, false),
-					MACState:        ttnpb.NewPopulatedMACState(test.Randy, false),
+					PendingSession:  ttnpb.NewPopulatedSession(test.Randy, false),
+					PendingMACState: ttnpb.NewPopulatedMACState(test.Randy, false),
 				},
 				func() *ttnpb.UplinkMessage {
 					msg := ttnpb.NewPopulatedUplinkMessageJoinRequest(test.Randy)
@@ -1935,8 +1927,8 @@ func handleJoinTest() func(t *testing.T) {
 						DeviceID:               DeviceID,
 					},
 					FrequencyPlanID: test.EUFrequencyPlanID,
-					Session:         ttnpb.NewPopulatedSession(test.Randy, false),
-					MACState:        ttnpb.NewPopulatedMACState(test.Randy, false),
+					PendingSession:  ttnpb.NewPopulatedSession(test.Randy, false),
+					PendingMACState: ttnpb.NewPopulatedMACState(test.Randy, false),
 				},
 				func() *ttnpb.UplinkMessage {
 					msg := ttnpb.NewPopulatedUplinkMessageJoinRequest(test.Randy)
@@ -2031,10 +2023,25 @@ func handleJoinTest() func(t *testing.T) {
 				}
 				downlinkAddCh := make(chan downlinkTasksAddRequest, 1)
 
-				deduplicationDoneCh := make(chan windowEnd, 1)
-				collectionDoneCh := make(chan windowEnd, 1)
+				deduplicationDoneCh := make(chan WindowEndRequest, 1)
+				defer func() {
+					close(deduplicationDoneCh)
+				}()
+
+				collectionDoneCh := make(chan WindowEndRequest, 1)
+				defer func() {
+					close(collectionDoneCh)
+				}()
+
 				handleJoinCh := make(chan handleJoinRequest, 1)
+				defer func() {
+					close(handleJoinCh)
+				}()
+
 				asSendCh := make(chan *ttnpb.ApplicationUp)
+				defer func() {
+					close(asSendCh)
+				}()
 
 				keys := ttnpb.NewPopulatedSessionKeys(test.Randy, false)
 				if tc.Device.LoRaWANVersion.Compare(ttnpb.MAC_V1_1) < 0 {
@@ -2048,6 +2055,7 @@ func handleJoinTest() func(t *testing.T) {
 						NetID:   NetID,
 						Devices: devReg,
 						DownlinkTasks: &MockDownlinkTaskQueue{
+							PopFunc: DownlinkTaskPopBlockFunc,
 							AddFunc: func(ctx context.Context, devID ttnpb.EndDeviceIdentifiers, t time.Time, replace bool) error {
 								downlinkAddCh <- downlinkTasksAddRequest{
 									ctx:     ctx,
@@ -2059,16 +2067,8 @@ func handleJoinTest() func(t *testing.T) {
 							},
 						},
 					},
-					WithDeduplicationDoneFunc(func(ctx context.Context, msg *ttnpb.UplinkMessage) <-chan time.Time {
-						ch := make(chan time.Time, 1)
-						deduplicationDoneCh <- windowEnd{ctx, msg, ch}
-						return ch
-					}),
-					WithCollectionDoneFunc(func(ctx context.Context, msg *ttnpb.UplinkMessage) <-chan time.Time {
-						ch := make(chan time.Time, 1)
-						collectionDoneCh <- windowEnd{ctx, msg, ch}
-						return ch
-					}),
+					WithCollectionDoneFunc(MakeWindowEndChFunc(collectionDoneCh)),
+					WithDeduplicationDoneFunc(MakeWindowEndChFunc(deduplicationDoneCh)),
 					WithNsJsClientFunc(func(ctx context.Context, id ttnpb.EndDeviceIdentifiers) (ttnpb.NsJsClient, error) {
 						return &MockNsJsClient{
 							GetNwkSKeysFunc: func(ctx context.Context, req *ttnpb.SessionKeyRequest, _ ...grpc.CallOption) (*ttnpb.NwkSKeysResponse, error) {
@@ -2102,13 +2102,11 @@ func handleJoinTest() func(t *testing.T) {
 					[]string{
 						"created_at",
 						"frequency_plan_id",
-						"ids.dev_addr",
-						"ids.dev_eui",
-						"ids.join_eui",
 						"lorawan_phy_version",
 						"lorawan_version",
 						"mac_settings",
 						"mac_state",
+						"pending_mac_state",
 						"pending_session",
 						"recent_downlinks",
 						"session",
@@ -2120,13 +2118,11 @@ func handleJoinTest() func(t *testing.T) {
 						}
 						return CopyEndDevice(tc.Device), []string{
 							"frequency_plan_id",
-							"ids.dev_addr",
-							"ids.dev_eui",
-							"ids.join_eui",
 							"lorawan_phy_version",
 							"lorawan_version",
 							"mac_settings",
 							"mac_state",
+							"pending_mac_state",
 							"pending_session",
 							"recent_downlinks",
 							"session",
@@ -2140,24 +2136,49 @@ func handleJoinTest() func(t *testing.T) {
 				pb.UpdatedAt = ret.UpdatedAt
 				a.So(ret, should.HaveEmptyDiff, pb)
 
-				err = ResetMACState(ret, ns.FrequencyPlans, ttnpb.MACSettings{})
+				macState, err := NewMACState(ret, ns.FrequencyPlans, ttnpb.MACSettings{})
 				if !a.So(err, should.BeNil) {
 					t.Fatalf("Failed to reset MAC state: %s", err)
 				}
+				ret.PendingMACState = macState
 				pb = ret
 
 				expectedRequest := &ttnpb.JoinRequest{
 					RawPayload:         append(tc.UplinkMessage.RawPayload[:0:0], tc.UplinkMessage.RawPayload...),
-					Payload:            CopyUplinkMessage(tc.UplinkMessage).Payload,
 					NetID:              NetID,
 					SelectedMACVersion: pb.LoRaWANVersion,
-					RxDelay:            pb.MACState.DesiredParameters.Rx1Delay,
+					RxDelay:            pb.PendingMACState.DesiredParameters.Rx1Delay,
 					CFList:             frequencyplans.CFList(*test.Must(ns.FrequencyPlans.GetByID(test.EUFrequencyPlanID)).(*frequencyplans.FrequencyPlan), pb.LoRaWANPHYVersion),
 					DownlinkSettings: ttnpb.DLSettings{
-						Rx1DROffset: pb.MACState.DesiredParameters.Rx1DataRateOffset,
-						Rx2DR:       pb.MACState.DesiredParameters.Rx2DataRateIndex,
+						Rx1DROffset: pb.PendingMACState.DesiredParameters.Rx1DataRateOffset,
+						Rx2DR:       pb.PendingMACState.DesiredParameters.Rx2DataRateIndex,
 						OptNeg:      pb.LoRaWANVersion.Compare(ttnpb.MAC_V1_1) >= 0,
 					},
+				}
+				if expectedRequest.CFList != nil {
+					switch expectedRequest.CFList.Type {
+					case ttnpb.CFListType_FREQUENCIES:
+						phy := test.Must(test.Must(band.GetByID(pb.FrequencyPlanID)).(band.Band).Version(pb.LoRaWANPHYVersion)).(band.Band)
+						for _, freq := range expectedRequest.CFList.Freq {
+							if freq == 0 {
+								break
+							}
+							pb.PendingMACState.CurrentParameters.Channels = append(pb.PendingMACState.CurrentParameters.Channels, &ttnpb.MACParameters_Channel{
+								UplinkFrequency:   uint64(freq * 100),
+								DownlinkFrequency: uint64(freq * 100),
+								MaxDataRateIndex:  ttnpb.DataRateIndex(phy.MaxADRDataRateIndex),
+								EnableUplink:      true,
+							})
+						}
+
+					case ttnpb.CFListType_CHANNEL_MASKS:
+						if len(pb.PendingMACState.CurrentParameters.Channels) != len(expectedRequest.CFList.ChMasks) {
+							t.Fatal("Mismatch in CFList mask length and pending MAC state channel count")
+						}
+						for i, m := range expectedRequest.CFList.ChMasks {
+							pb.PendingMACState.CurrentParameters.Channels[i].EnableUplink = m
+						}
+					}
 				}
 
 				ctx := context.WithValue(authorizedCtx, struct{}{}, 42)
@@ -2188,18 +2209,16 @@ func handleJoinTest() func(t *testing.T) {
 					req.ch <- resp
 					req.errch <- nil
 
-				case we := <-collectionDoneCh:
-					close(we.ch)
+				case weReq := <-collectionDoneCh:
+					close(weReq.Response)
 					a.So(<-errch, should.BeNil)
 					t.Fatal("Join-request not sent to JS")
 
 				case <-time.After(Timeout):
-					t.Fatal("Timed out while waiting for join to be sent to JS")
+					t.Fatal("Timed out while waiting for join-request to be sent to JS")
 				}
 
 				md := sendUplinkDuplicates(t, ns, deduplicationDoneCh, ctx, tc.UplinkMessage, DuplicateCount)
-
-				close(deduplicationDoneCh)
 
 				select {
 				case up := <-asSendCh:
@@ -2213,8 +2232,8 @@ func handleJoinTest() func(t *testing.T) {
 							t.FailNow()
 						}
 
-						pb.MACState.RxWindowsAvailable = true
-						pb.MACState.QueuedJoinAccept = &ttnpb.MACState_JoinAccept{
+						pb.PendingMACState.RxWindowsAvailable = true
+						pb.PendingMACState.QueuedJoinAccept = &ttnpb.MACState_JoinAccept{
 							Payload: resp.RawPayload,
 							Request: *deepcopy.Copy(expectedRequest).(*ttnpb.JoinRequest),
 							Keys:    *keys,
@@ -2272,7 +2291,7 @@ func handleJoinTest() func(t *testing.T) {
 					})
 
 				case <-time.After(Timeout):
-					t.Fatal("Timed out while waiting for join to be sent to AS")
+					t.Fatal("Timed out while waiting for join-request to be sent to AS")
 				}
 
 				select {
@@ -2287,7 +2306,6 @@ func handleJoinTest() func(t *testing.T) {
 				}
 
 				_ = sendUplinkDuplicates(t, ns, collectionDoneCh, ctx, tc.UplinkMessage, DuplicateCount)
-				close(collectionDoneCh)
 
 				select {
 				case err := <-errch:
@@ -2296,9 +2314,6 @@ func handleJoinTest() func(t *testing.T) {
 				case <-time.After(Timeout):
 					t.Fatal("Timed out while waiting for HandleUplink to return")
 				}
-
-				deduplicationDoneCh = make(chan windowEnd, 1)
-				collectionDoneCh = make(chan windowEnd, 1)
 
 				t.Run("after cooldown window", func(t *testing.T) {
 					a := assertions.New(t)
@@ -2333,11 +2348,10 @@ func handleJoinTest() func(t *testing.T) {
 						t.Fatal("Join not sent to JS")
 
 					case <-time.After(Timeout):
-						t.Fatal("Timed out while waiting for join to be sent to JS")
+						t.Fatal("Timed out while waiting for join-request to be sent to JS")
 					}
 
 					_ = sendUplinkDuplicates(t, ns, deduplicationDoneCh, ctx, tc.UplinkMessage, DuplicateCount)
-					close(deduplicationDoneCh)
 
 					pb, err = devReg.GetByID(ctx, pb.EndDeviceIdentifiers.ApplicationIdentifiers, pb.EndDeviceIdentifiers.DeviceID, ttnpb.EndDeviceFieldPathsTopLevel)
 					if !a.So(err, should.BeNil) {
@@ -2364,7 +2378,7 @@ func handleJoinTest() func(t *testing.T) {
 						})
 
 					case <-time.After(Timeout):
-						t.Fatal("Timed out while waiting for join to be sent to AS")
+						t.Fatal("Timed out while waiting for join-request to be sent to AS")
 					}
 
 					pb.EndDeviceIdentifiers.DevAddr = &expectedRequest.DevAddr
@@ -2380,7 +2394,6 @@ func handleJoinTest() func(t *testing.T) {
 					}
 
 					_ = sendUplinkDuplicates(t, ns, collectionDoneCh, ctx, tc.UplinkMessage, DuplicateCount)
-					close(collectionDoneCh)
 
 					select {
 					case err := <-errch:
@@ -2417,7 +2430,9 @@ func TestHandleUplink(t *testing.T) {
 			Devices:             devReg,
 			DeduplicationWindow: 42,
 			CooldownWindow:      42,
-			DownlinkTasks:       &MockDownlinkTaskQueue{},
+			DownlinkTasks: &MockDownlinkTaskQueue{
+				PopFunc: DownlinkTaskPopBlockFunc,
+			},
 		},
 	)).(*NetworkServer)
 	test.Must(nil, ns.Start())

@@ -1133,15 +1133,6 @@
       "file": "errors.go"
     }
   },
-  "error:cmd/ttn-lw-cli/commands:address_mismatch": {
-    "translations": {
-      "en": "server address mismatch"
-    },
-    "description": {
-      "package": "cmd/ttn-lw-cli/commands",
-      "file": "end_devices.go"
-    }
-  },
   "error:cmd/ttn-lw-cli/commands:antenna_index": {
     "translations": {
       "en": "index of antenna to update out of bounds"
@@ -1185,6 +1176,24 @@
     "description": {
       "package": "cmd/ttn-lw-cli/commands",
       "file": "end_devices.go"
+    }
+  },
+  "error:cmd/ttn-lw-cli/commands:end_device_server_address_mismatch": {
+    "translations": {
+      "en": "network/application/join server address mismatch"
+    },
+    "description": {
+      "package": "cmd/ttn-lw-cli/commands",
+      "file": "end_devices.go"
+    }
+  },
+  "error:cmd/ttn-lw-cli/commands:gateway_server_address_mismatch": {
+    "translations": {
+      "en": "gateway server address mismatch"
+    },
+    "description": {
+      "package": "cmd/ttn-lw-cli/commands",
+      "file": "gateways.go"
     }
   },
   "error:cmd/ttn-lw-cli/commands:inconsistent_end_device_eui": {
@@ -2069,6 +2078,24 @@
       "file": "listeners.go"
     }
   },
+  "error:pkg/component:missing_acme_dir": {
+    "translations": {
+      "en": "missing ACME storage directory"
+    },
+    "description": {
+      "package": "pkg/component",
+      "file": "acme.go"
+    }
+  },
+  "error:pkg/component:missing_acme_endpoint": {
+    "translations": {
+      "en": "missing ACME endpoint"
+    },
+    "description": {
+      "package": "pkg/component",
+      "file": "acme.go"
+    }
+  },
   "error:pkg/config:format": {
     "translations": {
       "en": "invalid format `{input}`"
@@ -2288,6 +2315,15 @@
   "error:pkg/encoding/lorawan:encoded_field_length_bound": {
     "translations": {
       "en": "`{lorawan_field}` encoded length `{value}` should between `{min}` and `{max}`"
+    },
+    "description": {
+      "package": "pkg/encoding/lorawan",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/encoding/lorawan:encoded_field_length_equal": {
+    "translations": {
+      "en": "`{lorawan_field}` encoded length `{value}` should be `{expected}`"
     },
     "description": {
       "package": "pkg/encoding/lorawan",
@@ -2798,6 +2834,24 @@
       "file": "scheduler.go"
     }
   },
+  "error:pkg/gatewayserver/scheduling:no_absolute_gateway_time": {
+    "translations": {
+      "en": "no absolute gateway time"
+    },
+    "description": {
+      "package": "pkg/gatewayserver/scheduling",
+      "file": "scheduler.go"
+    }
+  },
+  "error:pkg/gatewayserver/scheduling:no_clock_sync": {
+    "translations": {
+      "en": "no clock sync"
+    },
+    "description": {
+      "package": "pkg/gatewayserver/scheduling",
+      "file": "scheduler.go"
+    }
+  },
   "error:pkg/gatewayserver/scheduling:sub_band_not_found": {
     "translations": {
       "en": "sub-band not found for frequency `{frequency}` Hz"
@@ -2846,6 +2900,15 @@
   "error:pkg/gatewayserver:gateway_not_registered": {
     "translations": {
       "en": "gateway `{gateway_uid}` is not registered"
+    },
+    "description": {
+      "package": "pkg/gatewayserver",
+      "file": "gatewayserver.go"
+    }
+  },
+  "error:pkg/gatewayserver:host_handle": {
+    "translations": {
+      "en": "host `{host}` failed to handle message"
     },
     "description": {
       "package": "pkg/gatewayserver",
@@ -3374,6 +3437,213 @@
       "file": "user_registry.go"
     }
   },
+  "error:pkg/interop:activation": {
+    "translations": {
+      "en": "activation disallowed"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:deferred": {
+    "translations": {
+      "en": "deferred"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:device_roaming": {
+    "translations": {
+      "en": "device roaming disallowed"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:f_port": {
+    "translations": {
+      "en": "invalid FPort"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:frame_replayed": {
+    "translations": {
+      "en": "frame replayed"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:frame_size": {
+    "translations": {
+      "en": "frame size error"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:invalid_length": {
+    "translations": {
+      "en": "invalid length"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:invalid_request_type": {
+    "translations": {
+      "en": "invalid request type `{type}`"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:join_req": {
+    "translations": {
+      "en": "join-request failed"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:malformed_message": {
+    "translations": {
+      "en": "malformed message"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:mic": {
+    "translations": {
+      "en": "MIC failed"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:no_action": {
+    "translations": {
+      "en": "no action"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:no_roaming_agreement": {
+    "translations": {
+      "en": "no roaming agreement"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:not_registered": {
+    "translations": {
+      "en": "not registered"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:protocol_version": {
+    "translations": {
+      "en": "invalid protocol version"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:roaming_activation": {
+    "translations": {
+      "en": "roaming activation disallowed"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:stale_device_profile": {
+    "translations": {
+      "en": "stale device profile"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:transmit_failed": {
+    "translations": {
+      "en": "transmit failed"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:unknown_dev_addr": {
+    "translations": {
+      "en": "unknown DevAddr"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:unknown_dev_eui": {
+    "translations": {
+      "en": "unknown DevEUI"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:unknown_mac_version": {
+    "translations": {
+      "en": "unknown MAC version"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:unknown_receiver": {
+    "translations": {
+      "en": "unknown receiver"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/interop:unknown_sender": {
+    "translations": {
+      "en": "unknown sender"
+    },
+    "description": {
+      "package": "pkg/interop",
+      "file": "errors.go"
+    }
+  },
   "error:pkg/joinserver/provisioning:entry": {
     "translations": {
       "en": "invalid entry"
@@ -3426,6 +3696,15 @@
     "description": {
       "package": "pkg/joinserver/redis",
       "file": "registry.go"
+    }
+  },
+  "error:pkg/joinserver:address_not_authorized": {
+    "translations": {
+      "en": "address `{address}` is not authorized for the entity"
+    },
+    "description": {
+      "package": "pkg/joinserver",
+      "file": "errors.go"
     }
   },
   "error:pkg/joinserver:check_mic": {
@@ -3590,6 +3869,15 @@
       "file": "errors.go"
     }
   },
+  "error:pkg/joinserver:net_id_mismatch": {
+    "translations": {
+      "en": "NetID `{net_id}` does not match"
+    },
+    "description": {
+      "package": "pkg/joinserver",
+      "file": "errors.go"
+    }
+  },
   "error:pkg/joinserver:no_app_key": {
     "translations": {
       "en": "no AppKey specified"
@@ -3647,6 +3935,15 @@
   "error:pkg/joinserver:no_join_request": {
     "translations": {
       "en": "no JoinRequest specified"
+    },
+    "description": {
+      "package": "pkg/joinserver",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/joinserver:no_net_id": {
+    "translations": {
+      "en": "no NetID specified"
     },
     "description": {
       "package": "pkg/joinserver",
@@ -3764,6 +4061,15 @@
   "error:pkg/joinserver:reuse_dev_nonce": {
     "translations": {
       "en": "DevNonce has already been used"
+    },
+    "description": {
+      "package": "pkg/joinserver",
+      "file": "errors.go"
+    }
+  },
+  "error:pkg/joinserver:unauthenticated": {
+    "translations": {
+      "en": "unauthenticated"
     },
     "description": {
       "package": "pkg/joinserver",
@@ -3914,6 +4220,15 @@
       "file": "errors.go"
     }
   },
+  "error:pkg/networkserver:confirmed_too_soon": {
+    "translations": {
+      "en": "confirmed downlink is scheduled too soon"
+    },
+    "description": {
+      "package": "pkg/networkserver",
+      "file": "errors.go"
+    }
+  },
   "error:pkg/networkserver:corrupted_mac_state": {
     "translations": {
       "en": "MAC state is corrupted"
@@ -3968,6 +4283,15 @@
       "file": "errors.go"
     }
   },
+  "error:pkg/networkserver:downlink_expired": {
+    "translations": {
+      "en": "queued downlink is expired"
+    },
+    "description": {
+      "package": "pkg/networkserver",
+      "file": "errors.go"
+    }
+  },
   "error:pkg/networkserver:downlink_priority": {
     "translations": {
       "en": "invalid downlink priority `{value}`"
@@ -3980,15 +4304,6 @@
   "error:pkg/networkserver:duplicate_cid_handler": {
     "translations": {
       "en": "a handler for MAC command with CID {cid} is already registered"
-    },
-    "description": {
-      "package": "pkg/networkserver",
-      "file": "errors.go"
-    }
-  },
-  "error:pkg/networkserver:duplicate_identifiers": {
-    "translations": {
-      "en": "a device identified by the identifiers already exists"
     },
     "description": {
       "package": "pkg/networkserver",
@@ -4076,15 +4391,6 @@
       "file": "errors.go"
     }
   },
-  "error:pkg/networkserver:gateway_server_not_found": {
-    "translations": {
-      "en": "Gateway Server not found"
-    },
-    "description": {
-      "package": "pkg/networkserver",
-      "file": "errors.go"
-    }
-  },
   "error:pkg/networkserver:invalid_f_nwk_s_int_key": {
     "translations": {
       "en": "invalid FNwkSIntKey"
@@ -4157,15 +4463,6 @@
       "file": "errors.go"
     }
   },
-  "error:pkg/networkserver:no_frequency_plan": {
-    "translations": {
-      "en": "no frequency plan specified"
-    },
-    "description": {
-      "package": "pkg/networkserver",
-      "file": "errors.go"
-    }
-  },
   "error:pkg/networkserver:no_join_eui": {
     "translations": {
       "en": "no JoinEUI specified"
@@ -4220,15 +4517,6 @@
       "file": "errors.go"
     }
   },
-  "error:pkg/networkserver:rx2_data_rate_index": {
-    "translations": {
-      "en": "invalid Rx2 data rate index"
-    },
-    "description": {
-      "package": "pkg/networkserver",
-      "file": "errors.go"
-    }
-  },
   "error:pkg/networkserver:schedule": {
     "translations": {
       "en": "all downlink scheduling attempts failed"
@@ -4238,9 +4526,18 @@
       "file": "errors.go"
     }
   },
+  "error:pkg/networkserver:schedule_too_late": {
+    "translations": {
+      "en": "downlink is scheduled too late"
+    },
+    "description": {
+      "package": "pkg/networkserver",
+      "file": "errors.go"
+    }
+  },
   "error:pkg/networkserver:schedule_too_soon": {
     "translations": {
-      "en": "confirmed downlink is scheduled too soon"
+      "en": "downlink is scheduled too soon"
     },
     "description": {
       "package": "pkg/networkserver",
@@ -4259,24 +4556,6 @@
   "error:pkg/networkserver:unknown_chanel": {
     "translations": {
       "en": "channel is unknown"
-    },
-    "description": {
-      "package": "pkg/networkserver",
-      "file": "errors.go"
-    }
-  },
-  "error:pkg/networkserver:unknown_f_nwk_s_int_key": {
-    "translations": {
-      "en": "FNwkSIntKey is unknown"
-    },
-    "description": {
-      "package": "pkg/networkserver",
-      "file": "errors.go"
-    }
-  },
-  "error:pkg/networkserver:unknown_frequency_plan": {
-    "translations": {
-      "en": "frequency plan is unknown"
     },
     "description": {
       "package": "pkg/networkserver",
@@ -5402,6 +5681,15 @@
   "event:gs.up.drop": {
     "translations": {
       "en": "drop uplink message"
+    },
+    "description": {
+      "package": "pkg/gatewayserver",
+      "file": "observability.go"
+    }
+  },
+  "event:gs.up.fail": {
+    "translations": {
+      "en": "fail to handle uplink message"
     },
     "description": {
       "package": "pkg/gatewayserver",

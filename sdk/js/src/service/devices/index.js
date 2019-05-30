@@ -18,9 +18,12 @@ import { URL } from 'url'
 import traverse from 'traverse'
 import Marshaler from '../../util/marshaler'
 import Device from '../../entity/device'
+import stream from '../../api/stream/stream-node'
 import randomByteString from '../../util/random-bytes'
+import deviceEntityMap from '../../../generated/device-entity-map.json'
 import { splitSetPaths, splitGetPaths, makeRequests } from './split'
 import mergeDevice from './merge'
+
 
 /**
  * Devices Class provides an abstraction on all devices and manages data
@@ -51,7 +54,7 @@ class Devices {
     const devId = deviceId || 'device_id' in ids && ids.device_id
     const appId = applicationId || 'application_ids' in ids && ids.application_ids.application_id
 
-    if (deviceId && ids && 'device_id' in deviceId && deviceId !== ids.device_id) {
+    if (deviceId && ids && 'device_id' in ids && deviceId !== ids.device_id) {
       throw new Error('Device ID mismatch.')
     }
 
@@ -77,9 +80,21 @@ class Devices {
     }
 
     // Extract the paths from the patch
+    const deviceMap = traverse(deviceEntityMap)
+
+    const commonPathFilter = function (element, index, array) {
+      return deviceMap.has(array.slice(0, index + 1))
+    }
     const paths = traverse(device).reduce(function (acc, node) {
       if (this.isLeaf) {
-        acc.push(this.path)
+        const path = this.path
+
+        // Only consider adding, if a common parent has not been already added
+        if (acc.every(e => !path.join().startsWith(e.join()))) {
+          // Add only the deepest possible field mask of the patch
+          const commonPath = path.filter(commonPathFilter)
+          acc.push(commonPath)
+        }
       }
       return acc
     }, [])
@@ -94,9 +109,35 @@ class Devices {
       delete requestTree.is
     }
 
+    // Retrieve join information if not present
+    if (!create && !('supports_join' in device)) {
+      try {
+        const res = await this._getDevice(appId, devId, [[ 'supports_join' ]])
+        device.supports_join = res.supports_join
+      } catch (err) {
+        throw new Error('Could not retrieve join information of the device')
+      }
+    }
+
     // Do not query JS when the device is ABP
     if (!device.supports_join) {
       delete requestTree.js
+    }
+
+    // Retrieve necessary EUIs in case of a join server query being necessary
+    if ('js' in requestTree) {
+      if (!create && (!ids || !ids.join_eui || !ids.dev_eui)) {
+        try {
+          const res = await this._getDevice(appId, devId, [[ 'ids', 'join_eui' ], [ 'ids', 'dev_eui' ]])
+          device.ids = {
+            ...device.ids,
+            join_eui: res.ids.join_eui,
+            dev_eui: res.ids.dev_eui,
+          }
+        } catch (err) {
+          throw new Error('Could not update Join Server data on a device without Join EUI or Dev EUI')
+        }
+      }
     }
 
     // Write the device id param based on either the id of the newly created
@@ -271,6 +312,21 @@ class Devices {
     const result = this._deleteDevice(applicationId, deviceId)
 
     return result
+  }
+
+  // Events Stream
+
+  async openStream (identifiers, tail, after) {
+    const eventsUrl = `${this._stackConfig.as}/events`
+    const payload = {
+      identifiers: identifiers.map(ids => ({
+        device_ids: ids,
+      })),
+      tail,
+      after,
+    }
+
+    return stream(payload, eventsUrl)
   }
 }
 

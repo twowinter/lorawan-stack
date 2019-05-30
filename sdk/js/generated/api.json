@@ -306,6 +306,45 @@
           ]
         },
         {
+          "name": "GetApplicationAPIKeyRequest",
+          "longName": "GetApplicationAPIKeyRequest",
+          "fullName": "ttn.lorawan.v3.GetApplicationAPIKeyRequest",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "application_ids",
+              "description": "",
+              "label": "",
+              "type": "ApplicationIdentifiers",
+              "longType": "ApplicationIdentifiers",
+              "fullType": "ttn.lorawan.v3.ApplicationIdentifiers",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "key_id",
+              "description": "Unique public identifier for the API key.",
+              "label": "",
+              "type": "string",
+              "longType": "string",
+              "fullType": "string",
+              "ismap": false,
+              "defaultValue": ""
+            }
+          ]
+        },
+        {
           "name": "GetApplicationRequest",
           "longName": "GetApplicationRequest",
           "fullName": "ttn.lorawan.v3.GetApplicationRequest",
@@ -743,6 +782,28 @@
                     {
                       "method": "GET",
                       "pattern": "/applications/{application_ids.application_id}/api-keys"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "GetAPIKey",
+              "description": "",
+              "requestType": "GetApplicationAPIKeyRequest",
+              "requestLongType": "GetApplicationAPIKeyRequest",
+              "requestFullType": "ttn.lorawan.v3.GetApplicationAPIKeyRequest",
+              "requestStreaming": false,
+              "responseType": "APIKey",
+              "responseLongType": "APIKey",
+              "responseFullType": "ttn.lorawan.v3.APIKey",
+              "responseStreaming": false,
+              "options": {
+                "google.api.http": {
+                  "rules": [
+                    {
+                      "method": "GET",
+                      "pattern": "/applications/{application_ids.application_id}/api-keys/{key_id}"
                     }
                   ]
                 }
@@ -1982,7 +2043,7 @@
                   "rules": [
                     {
                       "method": "GET",
-                      "pattern": "/as/applications/{ids.application_ids.application_id}/webhooks/{ids.webhook_id}"
+                      "pattern": "/as/webhooks/{ids.application_ids.application_id}/{ids.webhook_id}"
                     }
                   ]
                 }
@@ -2004,7 +2065,7 @@
                   "rules": [
                     {
                       "method": "GET",
-                      "pattern": "/as/applications/{application_ids.application_id}/webhooks"
+                      "pattern": "/as/webhooks/{application_ids.application_id}"
                     }
                   ]
                 }
@@ -2025,8 +2086,13 @@
                 "google.api.http": {
                   "rules": [
                     {
+                      "method": "PUT",
+                      "pattern": "/as/webhooks/{webhook.ids.application_ids.application_id}/{webhook.ids.webhook_id}",
+                      "body": "*"
+                    },
+                    {
                       "method": "POST",
-                      "pattern": "/as/applications/{webhook.ids.application_ids.application_id}/webhooks/{webhook.ids.webhook_id}",
+                      "pattern": "/as/webhooks/{webhook.ids.application_ids.application_id}",
                       "body": "*"
                     }
                   ]
@@ -2049,7 +2115,7 @@
                   "rules": [
                     {
                       "method": "DELETE",
-                      "pattern": "/as/applications/{application_ids.application_id}/webhooks/{webhook_id}"
+                      "pattern": "/as/webhooks/{application_ids.application_id}/{webhook_id}"
                     }
                   ]
                 }
@@ -3842,6 +3908,16 @@
               "defaultValue": ""
             },
             {
+              "name": "pending_mac_state",
+              "description": "Pending MAC state of the device. Stored in Network Server.",
+              "label": "",
+              "type": "MACState",
+              "longType": "MACState",
+              "fullType": "ttn.lorawan.v3.MACState",
+              "ismap": false,
+              "defaultValue": ""
+            },
+            {
               "name": "session",
               "description": "Current session of the device. Stored in Network Server and Application Server.",
               "label": "",
@@ -4646,26 +4722,6 @@
               "defaultValue": ""
             },
             {
-              "name": "uplink_dwell_time",
-              "description": "Uplink dwell time is set (400ms).",
-              "label": "",
-              "type": "bool",
-              "longType": "bool",
-              "fullType": "bool",
-              "ismap": false,
-              "defaultValue": ""
-            },
-            {
-              "name": "downlink_dwell_time",
-              "description": "Downlink dwell time is set (400ms).",
-              "label": "",
-              "type": "bool",
-              "longType": "bool",
-              "fullType": "bool",
-              "ismap": false,
-              "defaultValue": ""
-            },
-            {
               "name": "adr_data_rate_index",
               "description": "ADR: data rate index to use.",
               "label": "",
@@ -4968,6 +5024,26 @@
                   }
                 ]
               }
+            },
+            {
+              "name": "uplink_dwell_time",
+              "description": "Whether uplink dwell time is set (400ms).\nIf this field is not set, then the value is either unknown or irrelevant(Network Server cannot modify it).",
+              "label": "",
+              "type": "BoolValue",
+              "longType": "google.protobuf.BoolValue",
+              "fullType": "google.protobuf.BoolValue",
+              "ismap": false,
+              "defaultValue": ""
+            },
+            {
+              "name": "downlink_dwell_time",
+              "description": "Whether downlink dwell time is set (400ms).\nIf this field is not set, then the value is either unknown or irrelevant(Network Server cannot modify it).",
+              "label": "",
+              "type": "BoolValue",
+              "longType": "google.protobuf.BoolValue",
+              "fullType": "google.protobuf.BoolValue",
+              "ismap": false,
+              "defaultValue": ""
             }
           ]
         },
@@ -7001,6 +7077,91 @@
               "fullType": "uint64",
               "ismap": false,
               "defaultValue": ""
+            },
+            {
+              "name": "round_trip_times",
+              "description": "",
+              "label": "",
+              "type": "RoundTripTimes",
+              "longType": "GatewayConnectionStats.RoundTripTimes",
+              "fullType": "ttn.lorawan.v3.GatewayConnectionStats.RoundTripTimes",
+              "ismap": false,
+              "defaultValue": ""
+            }
+          ]
+        },
+        {
+          "name": "RoundTripTimes",
+          "longName": "GatewayConnectionStats.RoundTripTimes",
+          "fullName": "ttn.lorawan.v3.GatewayConnectionStats.RoundTripTimes",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "min",
+              "description": "",
+              "label": "",
+              "type": "Duration",
+              "longType": "google.protobuf.Duration",
+              "fullType": "google.protobuf.Duration",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "max",
+              "description": "",
+              "label": "",
+              "type": "Duration",
+              "longType": "google.protobuf.Duration",
+              "fullType": "google.protobuf.Duration",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "median",
+              "description": "",
+              "label": "",
+              "type": "Duration",
+              "longType": "google.protobuf.Duration",
+              "fullType": "google.protobuf.Duration",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "count",
+              "description": "",
+              "label": "",
+              "type": "uint32",
+              "longType": "uint32",
+              "fullType": "uint32",
+              "ismap": false,
+              "defaultValue": ""
             }
           ]
         },
@@ -7502,6 +7663,45 @@
           ]
         },
         {
+          "name": "GetGatewayAPIKeyRequest",
+          "longName": "GetGatewayAPIKeyRequest",
+          "fullName": "ttn.lorawan.v3.GetGatewayAPIKeyRequest",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "gateway_ids",
+              "description": "",
+              "label": "",
+              "type": "GatewayIdentifiers",
+              "longType": "GatewayIdentifiers",
+              "fullType": "ttn.lorawan.v3.GatewayIdentifiers",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "key_id",
+              "description": "Unique public identifier for the API key.",
+              "label": "",
+              "type": "string",
+              "longType": "string",
+              "fullType": "string",
+              "ismap": false,
+              "defaultValue": ""
+            }
+          ]
+        },
+        {
           "name": "GetGatewayIdentifiersForEUIRequest",
           "longName": "GetGatewayIdentifiersForEUIRequest",
           "fullName": "ttn.lorawan.v3.GetGatewayIdentifiersForEUIRequest",
@@ -7992,6 +8192,28 @@
                     {
                       "method": "GET",
                       "pattern": "/gateways/{gateway_ids.gateway_id}/api-keys"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "GetAPIKey",
+              "description": "",
+              "requestType": "GetGatewayAPIKeyRequest",
+              "requestLongType": "GetGatewayAPIKeyRequest",
+              "requestFullType": "ttn.lorawan.v3.GetGatewayAPIKeyRequest",
+              "requestStreaming": false,
+              "responseType": "APIKey",
+              "responseLongType": "APIKey",
+              "responseFullType": "ttn.lorawan.v3.APIKey",
+              "responseStreaming": false,
+              "options": {
+                "google.api.http": {
+                  "rules": [
+                    {
+                      "method": "GET",
+                      "pattern": "/gateways/{gateway_ids.gateway_id}/api-keys/{key_id}"
                     }
                   ]
                 }
@@ -8581,7 +8803,7 @@
             },
             {
               "name": "join_eui",
-              "description": "The LoRaWAN JoinEUI (or AppEUI for LoRaWAN 1.0 end devices).",
+              "description": "The LoRaWAN JoinEUI (AppEUI until LoRaWAN 1.0.3 end devices).",
               "label": "",
               "type": "bytes",
               "longType": "bytes",
@@ -9827,6 +10049,16 @@
             {
               "name": "dev_eui",
               "description": "LoRaWAN DevEUI.",
+              "label": "",
+              "type": "bytes",
+              "longType": "bytes",
+              "fullType": "bytes",
+              "ismap": false,
+              "defaultValue": ""
+            },
+            {
+              "name": "join_eui",
+              "description": "The LoRaWAN JoinEUI (AppEUI until LoRaWAN 1.0.3 end devices).",
               "label": "",
               "type": "bytes",
               "longType": "bytes",
@@ -14482,6 +14714,24 @@
       "hasServices": false,
       "enums": [
         {
+          "name": "Operation",
+          "longName": "DownlinkQueueOperation.Operation",
+          "fullName": "ttn.lorawan.v3.DownlinkQueueOperation.Operation",
+          "description": "",
+          "values": [
+            {
+              "name": "PUSH",
+              "number": "0",
+              "description": ""
+            },
+            {
+              "name": "REPLACE",
+              "number": "1",
+              "description": ""
+            }
+          ]
+        },
+        {
           "name": "PayloadFormatter",
           "longName": "PayloadFormatter",
           "fullName": "ttn.lorawan.v3.PayloadFormatter",
@@ -14611,6 +14861,10 @@
                   {
                     "name": "uint32.lte",
                     "value": 255
+                  },
+                  {
+                    "name": "uint32.gte",
+                    "value": 1
                   }
                 ]
               }
@@ -15180,6 +15434,10 @@
                   {
                     "name": "uint32.lte",
                     "value": 255
+                  },
+                  {
+                    "name": "uint32.gte",
+                    "value": 1
                   }
                 ]
               }
@@ -15328,6 +15586,63 @@
                   }
                 ]
               }
+            }
+          ]
+        },
+        {
+          "name": "DownlinkQueueOperation",
+          "longName": "DownlinkQueueOperation",
+          "fullName": "ttn.lorawan.v3.DownlinkQueueOperation",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "end_device_ids",
+              "description": "",
+              "label": "",
+              "type": "EndDeviceIdentifiers",
+              "longType": "EndDeviceIdentifiers",
+              "fullType": "ttn.lorawan.v3.EndDeviceIdentifiers",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "operation",
+              "description": "",
+              "label": "",
+              "type": "Operation",
+              "longType": "DownlinkQueueOperation.Operation",
+              "fullType": "ttn.lorawan.v3.DownlinkQueueOperation.Operation",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "enum.defined_only",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "downlinks",
+              "description": "",
+              "label": "repeated",
+              "type": "ApplicationDownlink",
+              "longType": "ApplicationDownlink",
+              "fullType": "ttn.lorawan.v3.ApplicationDownlink",
+              "ismap": false,
+              "defaultValue": ""
             }
           ]
         },
@@ -15964,11 +16279,33 @@
       "package": "ttn.lorawan.v3",
       "hasEnums": false,
       "hasExtensions": false,
-      "hasMessages": false,
+      "hasMessages": true,
       "hasServices": true,
       "enums": [],
       "extensions": [],
-      "messages": [],
+      "messages": [
+        {
+          "name": "GenerateDevAddrResponse",
+          "longName": "GenerateDevAddrResponse",
+          "fullName": "ttn.lorawan.v3.GenerateDevAddrResponse",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "dev_addr",
+              "description": "",
+              "label": "",
+              "type": "bytes",
+              "longType": "bytes",
+              "fullType": "bytes",
+              "ismap": false,
+              "defaultValue": ""
+            }
+          ]
+        }
+      ],
       "services": [
         {
           "name": "AsNs",
@@ -16043,6 +16380,36 @@
               "responseLongType": ".google.protobuf.Empty",
               "responseFullType": "google.protobuf.Empty",
               "responseStreaming": false
+            }
+          ]
+        },
+        {
+          "name": "Ns",
+          "longName": "Ns",
+          "fullName": "ttn.lorawan.v3.Ns",
+          "description": "",
+          "methods": [
+            {
+              "name": "GenerateDevAddr",
+              "description": "GenerateDevAddr requests a device address assignment from the Network Server.",
+              "requestType": "Empty",
+              "requestLongType": ".google.protobuf.Empty",
+              "requestFullType": "google.protobuf.Empty",
+              "requestStreaming": false,
+              "responseType": "GenerateDevAddrResponse",
+              "responseLongType": "GenerateDevAddrResponse",
+              "responseFullType": "ttn.lorawan.v3.GenerateDevAddrResponse",
+              "responseStreaming": false,
+              "options": {
+                "google.api.http": {
+                  "rules": [
+                    {
+                      "method": "GET",
+                      "pattern": "/ns/dev_addr"
+                    }
+                  ]
+                }
+              }
             }
           ]
         },
@@ -16973,6 +17340,45 @@
           ]
         },
         {
+          "name": "GetOrganizationAPIKeyRequest",
+          "longName": "GetOrganizationAPIKeyRequest",
+          "fullName": "ttn.lorawan.v3.GetOrganizationAPIKeyRequest",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "organization_ids",
+              "description": "",
+              "label": "",
+              "type": "OrganizationIdentifiers",
+              "longType": "OrganizationIdentifiers",
+              "fullType": "ttn.lorawan.v3.OrganizationIdentifiers",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "key_id",
+              "description": "Unique public identifier for the API key.",
+              "label": "",
+              "type": "string",
+              "longType": "string",
+              "fullType": "string",
+              "ismap": false,
+              "defaultValue": ""
+            }
+          ]
+        },
+        {
           "name": "GetOrganizationRequest",
           "longName": "GetOrganizationRequest",
           "fullName": "ttn.lorawan.v3.GetOrganizationRequest",
@@ -17585,6 +17991,28 @@
               }
             },
             {
+              "name": "GetAPIKey",
+              "description": "",
+              "requestType": "GetOrganizationAPIKeyRequest",
+              "requestLongType": "GetOrganizationAPIKeyRequest",
+              "requestFullType": "ttn.lorawan.v3.GetOrganizationAPIKeyRequest",
+              "requestStreaming": false,
+              "responseType": "APIKey",
+              "responseLongType": "APIKey",
+              "responseFullType": "ttn.lorawan.v3.APIKey",
+              "responseStreaming": false,
+              "options": {
+                "google.api.http": {
+                  "rules": [
+                    {
+                      "method": "GET",
+                      "pattern": "/organizations/{organization_ids.organization_id}/api-keys/{key_id}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
               "name": "UpdateAPIKey",
               "description": "Update the rights of an existing organization API key. To generate an API key,\nthe CreateAPIKey should be used. To delete an API key, update it\nwith zero rights.",
               "requestType": "UpdateOrganizationAPIKeyRequest",
@@ -18182,7 +18610,7 @@
             {
               "name": "RIGHT_APPLICATION_LINK",
               "number": "27",
-              "description": "The right to link as Application to a Network Server for traffic exchange,\ni.e. read uplink and write downlink (API keys only).\nThis right is typically only given to an Application Server."
+              "description": "The right to link as Application to a Network Server for traffic exchange,\ni.e. read uplink and write downlink (API keys only).\nThis right is typically only given to an Application Server.\nThis right implies RIGHT_APPLICATION_INFO."
             },
             {
               "name": "RIGHT_APPLICATION_ALL",
@@ -18232,7 +18660,7 @@
             {
               "name": "RIGHT_GATEWAY_LINK",
               "number": "37",
-              "description": "The right to link as Gateway to a Gateway Server for traffic exchange,\ni.e. write uplink and read downlink (API keys only)"
+              "description": "The right to link as Gateway to a Gateway Server for traffic exchange,\ni.e. write uplink and read downlink (API keys only)\nThis right is typically only given to a gateway.\nThis right implies RIGHT_GATEWAY_INFO."
             },
             {
               "name": "RIGHT_GATEWAY_STATUS_READ",
@@ -19106,6 +19534,45 @@
                   }
                 ]
               }
+            }
+          ]
+        },
+        {
+          "name": "GetUserAPIKeyRequest",
+          "longName": "GetUserAPIKeyRequest",
+          "fullName": "ttn.lorawan.v3.GetUserAPIKeyRequest",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "user_ids",
+              "description": "",
+              "label": "",
+              "type": "UserIdentifiers",
+              "longType": "UserIdentifiers",
+              "fullType": "ttn.lorawan.v3.UserIdentifiers",
+              "ismap": false,
+              "defaultValue": "",
+              "options": {
+                "validate.rules": [
+                  {
+                    "name": "message.required",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            {
+              "name": "key_id",
+              "description": "Unique public identifier for the API key.",
+              "label": "",
+              "type": "string",
+              "longType": "string",
+              "fullType": "string",
+              "ismap": false,
+              "defaultValue": ""
             }
           ]
         },
@@ -20209,6 +20676,28 @@
                     {
                       "method": "GET",
                       "pattern": "/users/{user_ids.user_id}/api-keys"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "GetAPIKey",
+              "description": "",
+              "requestType": "GetUserAPIKeyRequest",
+              "requestLongType": "GetUserAPIKeyRequest",
+              "requestFullType": "ttn.lorawan.v3.GetUserAPIKeyRequest",
+              "requestStreaming": false,
+              "responseType": "APIKey",
+              "responseLongType": "APIKey",
+              "responseFullType": "ttn.lorawan.v3.APIKey",
+              "responseStreaming": false,
+              "options": {
+                "google.api.http": {
+                  "rules": [
+                    {
+                      "method": "GET",
+                      "pattern": "/users/{user_ids.user_id}/api-keys/{key_id}"
                     }
                   ]
                 }

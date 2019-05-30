@@ -19,10 +19,12 @@ import bind from 'autobind-decorator'
 
 import sharedMessages from '../../../lib/shared-messages'
 import Message from '../../../lib/components/message'
+import PropTypes from '../../../lib/prop-types'
 import FetchTable from '../fetch-table'
 import DateTime from '../../../lib/components/date-time'
 
 import { getDevicesList, searchDevicesList } from '../../../console/store/actions/devices'
+import { selectSelectedApplicationId } from '../../store/selectors/application'
 
 const m = defineMessages({
   deviceId: 'Device ID',
@@ -48,14 +50,14 @@ const headers = [
   },
 ]
 
-@connect(function ({ application, devices }, props) {
+@connect(function (state) {
   return {
-    appId: application.application.ids.application_id,
-    totalCount: devices.totalCount,
+    appId: selectSelectedApplicationId(state),
+    totalCount: state.devices.totalCount,
   }
 })
 @bind
-export default class DevicesTable extends React.Component {
+class DevicesTable extends React.Component {
   constructor (props) {
     super(props)
 
@@ -68,7 +70,7 @@ export default class DevicesTable extends React.Component {
   }
 
   render () {
-    const { totalCount } = this.props
+    const { totalCount, devicePathPrefix } = this.props
     return (
       <FetchTable
         entity="devices"
@@ -77,10 +79,21 @@ export default class DevicesTable extends React.Component {
         tableTitle={<Message content={m.connectedDevices} values={{ deviceCount: totalCount }} />}
         getItemsAction={this.getDevicesList}
         searchItemsAction={this.searchDevicesList}
-        itemPathPrefix="/devices"
+        itemPathPrefix={devicePathPrefix}
         baseDataSelector={this.baseDataSelector}
         {...this.props}
       />
     )
   }
 }
+
+DevicesTable.propTypes = {
+  devicePathPrefix: PropTypes.string,
+  totalCount: PropTypes.number,
+}
+
+DevicesTable.defaultProps = {
+  totalCount: 0,
+}
+
+export default DevicesTable

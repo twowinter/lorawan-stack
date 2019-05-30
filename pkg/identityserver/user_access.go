@@ -60,7 +60,7 @@ func (is *IdentityServer) createUserAPIKey(ctx context.Context, req *ttnpb.Creat
 		return nil, err
 	}
 	err = is.withDatabase(ctx, func(db *gorm.DB) error {
-		return store.GetAPIKeyStore(db).CreateAPIKey(ctx, req.UserIdentifiers.EntityIdentifiers(), key)
+		return store.GetAPIKeyStore(db).CreateAPIKey(ctx, req.UserIdentifiers, key)
 	})
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (is *IdentityServer) listUserAPIKeys(ctx context.Context, req *ttnpb.ListUs
 	}()
 	keys = &ttnpb.APIKeys{}
 	err = is.withDatabase(ctx, func(db *gorm.DB) (err error) {
-		keys.APIKeys, err = store.GetAPIKeyStore(db).FindAPIKeys(ctx, req.EntityIdentifiers())
+		keys.APIKeys, err = store.GetAPIKeyStore(db).FindAPIKeys(ctx, req.UserIdentifiers)
 		return err
 	})
 	if err != nil {
@@ -100,6 +100,26 @@ func (is *IdentityServer) listUserAPIKeys(ctx context.Context, req *ttnpb.ListUs
 		key.Key = ""
 	}
 	return keys, nil
+}
+
+func (is *IdentityServer) getUserAPIKey(ctx context.Context, req *ttnpb.GetUserAPIKeyRequest) (key *ttnpb.APIKey, err error) {
+	if err = rights.RequireUser(ctx, req.UserIdentifiers, ttnpb.RIGHT_USER_SETTINGS_API_KEYS); err != nil {
+		return nil, err
+	}
+
+	err = is.withDatabase(ctx, func(db *gorm.DB) (err error) {
+		_, key, err = store.GetAPIKeyStore(db).GetAPIKey(ctx, req.KeyID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	key.Key = ""
+	return key, nil
 }
 
 func (is *IdentityServer) updateUserAPIKey(ctx context.Context, req *ttnpb.UpdateUserAPIKeyRequest) (key *ttnpb.APIKey, err error) {
@@ -112,7 +132,7 @@ func (is *IdentityServer) updateUserAPIKey(ctx context.Context, req *ttnpb.Updat
 		return nil, err
 	}
 	err = is.withDatabase(ctx, func(db *gorm.DB) (err error) {
-		key, err = store.GetAPIKeyStore(db).UpdateAPIKey(ctx, req.UserIdentifiers.EntityIdentifiers(), &req.APIKey)
+		key, err = store.GetAPIKeyStore(db).UpdateAPIKey(ctx, req.UserIdentifiers, &req.APIKey)
 		return err
 	})
 	if err != nil {
@@ -143,6 +163,9 @@ type userAccess struct {
 
 func (ua *userAccess) ListRights(ctx context.Context, req *ttnpb.UserIdentifiers) (*ttnpb.Rights, error) {
 	return ua.listUserRights(ctx, req)
+}
+func (ua *userAccess) GetAPIKey(ctx context.Context, req *ttnpb.GetUserAPIKeyRequest) (*ttnpb.APIKey, error) {
+	return ua.getUserAPIKey(ctx, req)
 }
 func (ua *userAccess) CreateAPIKey(ctx context.Context, req *ttnpb.CreateUserAPIKeyRequest) (*ttnpb.APIKey, error) {
 	return ua.createUserAPIKey(ctx, req)

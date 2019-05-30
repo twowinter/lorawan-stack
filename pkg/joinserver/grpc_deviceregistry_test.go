@@ -38,8 +38,6 @@ import (
 
 var errNotFound = errors.DefineNotFound("not_found", "not found")
 
-func eui64Ptr(eui types.EUI64) *types.EUI64 { return &eui }
-
 func TestDeviceRegistryGet(t *testing.T) {
 	registeredApplicationID := "foo-application"
 	registeredDeviceID := "foo-device"
@@ -1476,7 +1474,7 @@ type mockJsEndDeviceRegistryProvisionServer struct {
 
 func (s *mockJsEndDeviceRegistryProvisionServer) Send(up *ttnpb.EndDevice) error {
 	if s.SendFunc == nil {
-		return nil
+		panic("Send called, but not set")
 	}
 	return s.SendFunc(up)
 }

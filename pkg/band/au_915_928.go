@@ -53,6 +53,16 @@ func init() {
 		})
 	}
 
+	downlinkDRTable := [7][6]ttnpb.DataRateIndex{
+		{8, 8, 8, 8, 8, 8},
+		{9, 8, 8, 8, 8, 8},
+		{10, 9, 8, 8, 8, 8},
+		{11, 10, 9, 8, 8, 8},
+		{12, 11, 10, 9, 8, 8},
+		{13, 12, 11, 10, 9, 8},
+		{13, 13, 12, 11, 10, 9},
+	}
+
 	au_915_928 = Band{
 		ID: AU_915_928,
 
@@ -164,15 +174,7 @@ func init() {
 			if offset > 5 {
 				return 0, errDataRateOffsetTooHigh.WithAttributes("max", 5)
 			}
-
-			si := int(uint32(idx) + 8 - offset)
-			switch {
-			case si <= 8:
-				return 8, nil
-			case si >= 13:
-				return 13, nil
-			}
-			return ttnpb.DataRateIndex(si), nil
+			return downlinkDRTable[idx][offset], nil
 		},
 
 		GenerateChMasks: makeGenerateChMask72(true),
@@ -187,10 +189,15 @@ func init() {
 			PingSlotChannels: usAuBeaconFrequencies[:],
 		},
 
+		TxParamSetupReqSupport: true,
+
 		// No LoRaWAN Regional Parameters 1.0
 		regionalParameters1_0_1:     bandIdentity,
 		regionalParameters1_0_2RevA: auDataRates1_0_2,
-		regionalParameters1_0_2RevB: disableChMaskCntl51_0_2,
+		regionalParameters1_0_2RevB: composeSwaps(
+			disableChMaskCntl51_0_2,
+			disableTxParamSetupReq,
+		),
 		regionalParameters1_0_3RevA: bandIdentity,
 		regionalParameters1_1RevA:   bandIdentity,
 	}

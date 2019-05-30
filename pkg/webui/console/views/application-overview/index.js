@@ -20,15 +20,17 @@ import sharedMessages from '../../../lib/shared-messages'
 import DateTime from '../../../lib/components/date-time'
 import DevicesTable from '../../containers/devices-table'
 import DataSheet from '../../../components/data-sheet'
+import ApplicationEvents from '../../containers/application-events'
 
+import { selectSelectedApplication } from '../../store/selectors/application'
 
 import style from './application-overview.styl'
 
 const DEVICES_TABLE_SIZE = 5
 
-@connect(function ({ application }, props) {
+@connect(function (state) {
   return {
-    application: application.application,
+    application: selectSelectedApplication(state),
   }
 })
 class ApplicationOverview extends React.Component {
@@ -65,6 +67,8 @@ class ApplicationOverview extends React.Component {
   }
 
   render () {
+    const { appId } = this.props.match.params
+
     return (
       <Container>
         <Row>
@@ -73,14 +77,16 @@ class ApplicationOverview extends React.Component {
           </Col>
           <Col sm={12} lg={6}>
             <div className={style.latestEvents}>
-              <h4>Latest Data</h4>
-              <div>Activity Events Placeholder</div>
+              <ApplicationEvents
+                appId={appId}
+                widget
+              />
             </div>
           </Col>
         </Row>
         <Row>
           <Col sm={12} className={style.table}>
-            <DevicesTable pageSize={DEVICES_TABLE_SIZE} />
+            <DevicesTable pageSize={DEVICES_TABLE_SIZE} devicePathPrefix="/devices" />
           </Col>
         </Row>
       </Container>

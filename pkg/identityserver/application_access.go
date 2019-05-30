@@ -63,7 +63,7 @@ func (is *IdentityServer) createApplicationAPIKey(ctx context.Context, req *ttnp
 		return nil, err
 	}
 	err = is.withDatabase(ctx, func(db *gorm.DB) error {
-		return store.GetAPIKeyStore(db).CreateAPIKey(ctx, req.ApplicationIdentifiers.EntityIdentifiers(), key)
+		return store.GetAPIKeyStore(db).CreateAPIKey(ctx, req.ApplicationIdentifiers, key)
 	})
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (is *IdentityServer) listApplicationAPIKeys(ctx context.Context, req *ttnpb
 	}()
 	keys = &ttnpb.APIKeys{}
 	err = is.withDatabase(ctx, func(db *gorm.DB) (err error) {
-		keys.APIKeys, err = store.GetAPIKeyStore(db).FindAPIKeys(ctx, req.EntityIdentifiers())
+		keys.APIKeys, err = store.GetAPIKeyStore(db).FindAPIKeys(ctx, req.ApplicationIdentifiers)
 		return err
 	})
 	if err != nil {
@@ -103,6 +103,26 @@ func (is *IdentityServer) listApplicationAPIKeys(ctx context.Context, req *ttnpb
 		key.Key = ""
 	}
 	return keys, nil
+}
+
+func (is *IdentityServer) getApplicationAPIKey(ctx context.Context, req *ttnpb.GetApplicationAPIKeyRequest) (key *ttnpb.APIKey, err error) {
+	if err = rights.RequireApplication(ctx, req.ApplicationIdentifiers, ttnpb.RIGHT_APPLICATION_SETTINGS_API_KEYS); err != nil {
+		return nil, err
+	}
+
+	err = is.withDatabase(ctx, func(db *gorm.DB) (err error) {
+		_, key, err = store.GetAPIKeyStore(db).GetAPIKey(ctx, req.KeyID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	key.Key = ""
+	return key, nil
 }
 
 func (is *IdentityServer) updateApplicationAPIKey(ctx context.Context, req *ttnpb.UpdateApplicationAPIKeyRequest) (key *ttnpb.APIKey, err error) {
@@ -115,7 +135,7 @@ func (is *IdentityServer) updateApplicationAPIKey(ctx context.Context, req *ttnp
 		return nil, err
 	}
 	err = is.withDatabase(ctx, func(db *gorm.DB) (err error) {
-		key, err = store.GetAPIKeyStore(db).UpdateAPIKey(ctx, req.ApplicationIdentifiers.EntityIdentifiers(), &req.APIKey)
+		key, err = store.GetAPIKeyStore(db).UpdateAPIKey(ctx, req.ApplicationIdentifiers, &req.APIKey)
 		return err
 	})
 	if err != nil {
@@ -153,7 +173,7 @@ func (is *IdentityServer) setApplicationCollaborator(ctx context.Context, req *t
 		return store.GetMembershipStore(db).SetMember(
 			ctx,
 			&req.Collaborator.OrganizationOrUserIdentifiers,
-			req.ApplicationIdentifiers.EntityIdentifiers(),
+			req.ApplicationIdentifiers,
 			ttnpb.RightsFrom(req.Collaborator.Rights...),
 		)
 	})
@@ -188,7 +208,7 @@ func (is *IdentityServer) listApplicationCollaborators(ctx context.Context, req 
 		}
 	}()
 	err = is.withDatabase(ctx, func(db *gorm.DB) error {
-		memberRights, err := store.GetMembershipStore(db).FindMembers(ctx, req.EntityIdentifiers())
+		memberRights, err := store.GetMembershipStore(db).FindMembers(ctx, req.ApplicationIdentifiers)
 		if err != nil {
 			return err
 		}
@@ -219,6 +239,9 @@ func (aa *applicationAccess) CreateAPIKey(ctx context.Context, req *ttnpb.Create
 }
 func (aa *applicationAccess) ListAPIKeys(ctx context.Context, req *ttnpb.ListApplicationAPIKeysRequest) (*ttnpb.APIKeys, error) {
 	return aa.listApplicationAPIKeys(ctx, req)
+}
+func (aa *applicationAccess) GetAPIKey(ctx context.Context, req *ttnpb.GetApplicationAPIKeyRequest) (*ttnpb.APIKey, error) {
+	return aa.getApplicationAPIKey(ctx, req)
 }
 func (aa *applicationAccess) UpdateAPIKey(ctx context.Context, req *ttnpb.UpdateApplicationAPIKeyRequest) (*ttnpb.APIKey, error) {
 	return aa.updateApplicationAPIKey(ctx, req)

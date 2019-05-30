@@ -19,8 +19,6 @@ import {
   createGetApiKeysListFailureActionType,
   getApiKeysListSuccess,
   createGetApiKeysListSuccessActionType,
-  getApiKey,
-  createGetApiKeyActionType,
 } from '../actions/api-keys'
 
 import {
@@ -34,19 +32,49 @@ import {
   getCollaborator,
 } from '../actions/collaborators'
 
+import {
+  startEventsStream,
+  createStartEventsStreamActionType,
+  startEventsStreamSuccess,
+  createStartEventsStreamSuccessActionType,
+  startEventsStreamFailure,
+  createStartEventsStreamFailureActionType,
+  stopEventsStream,
+  createStopEventsStreamActionType,
+  clearEvents,
+  createClearEventsActionType,
+} from '../actions/events'
+
+import {
+  getApiKey,
+  createGetApiKeyActionType,
+  getApiKeySuccess,
+  createGetApiKeySuccessActionType,
+  getApiKeyFailure,
+  createGetApiKeyFailureActionType,
+} from './api-key'
+
 export const SHARED_NAME = 'APPLICATION'
 
-export const GET_APP = 'GET_APPLICATION'
-export const GET_APP_SUCCESS = 'GET_APPLICATION_SUCCESS'
-export const GET_APP_FAILURE = 'GET_APPLICATION_FAILURE'
+export const GET_APP_BASE = 'GET_APPLICATION'
+export const GET_APP = `${GET_APP_BASE}_REQUEST`
+export const GET_APP_SUCCESS = `${GET_APP_BASE}_SUCCESS`
+export const GET_APP_FAILURE = `${GET_APP_BASE}_FAILURE`
 export const GET_APP_API_KEYS_LIST = createGetApiKeysListActionType(SHARED_NAME)
 export const GET_APP_API_KEYS_LIST_SUCCESS = createGetApiKeysListSuccessActionType(SHARED_NAME)
 export const GET_APP_API_KEYS_LIST_FAILURE = createGetApiKeysListFailureActionType(SHARED_NAME)
-export const GET_APP_API_KEY_PAGE_DATA = createGetApiKeyActionType(SHARED_NAME)
+export const GET_APP_API_KEY = createGetApiKeyActionType(SHARED_NAME)
+export const GET_APP_API_KEY_SUCCESS = createGetApiKeySuccessActionType(SHARED_NAME)
+export const GET_APP_API_KEY_FAILURE = createGetApiKeyFailureActionType(SHARED_NAME)
 export const GET_APP_COLLABORATOR_PAGE_DATA = createGetCollaboratorActionType(SHARED_NAME)
 export const GET_APP_COLLABORATORS_LIST = createGetCollaboratorsListActionType(SHARED_NAME)
 export const GET_APP_COLLABORATORS_LIST_SUCCESS = createGetCollaboratorsListSuccessActionType(SHARED_NAME)
 export const GET_APP_COLLABORATORS_LIST_FAILURE = createGetCollaboratorsListFailureActionType(SHARED_NAME)
+export const START_APP_EVENT_STREAM = createStartEventsStreamActionType(SHARED_NAME)
+export const START_APP_EVENT_STREAM_SUCCESS = createStartEventsStreamSuccessActionType(SHARED_NAME)
+export const START_APP_EVENT_STREAM_FAILURE = createStartEventsStreamFailureActionType(SHARED_NAME)
+export const STOP_APP_EVENT_STREAM = createStopEventsStreamActionType(SHARED_NAME)
+export const CLEAR_APP_EVENTS = createClearEventsActionType(SHARED_NAME)
 
 export const getApplication = id => (
   { type: GET_APP, id }
@@ -66,7 +94,11 @@ export const getApplicationApiKeysListSuccess = getApiKeysListSuccess(SHARED_NAM
 
 export const getApplicationApiKeysListFailure = getApiKeysListFailure(SHARED_NAME)
 
-export const getApplicationApiKeyPageData = getApiKey(SHARED_NAME)
+export const getApplicationApiKey = getApiKey(SHARED_NAME)
+
+export const getApplicationApiKeySuccess = getApiKeySuccess(SHARED_NAME)
+
+export const getApplicationApiKeyFailure = getApiKeyFailure(SHARED_NAME)
 
 export const getApplicationCollaboratorsList = getCollaboratorsList(SHARED_NAME)
 
@@ -75,3 +107,13 @@ export const getApplicationCollaboratorsListSuccess = getCollaboratorsListSucces
 export const getApplicationCollaboratorsListFailure = getCollaboratorsListFailure(SHARED_NAME)
 
 export const getApplicationCollaboratorPageData = getCollaborator(SHARED_NAME)
+
+export const startApplicationEventsStream = startEventsStream(SHARED_NAME)
+
+export const startApplicationEventsStreamSuccess = startEventsStreamSuccess(SHARED_NAME)
+
+export const startApplicationEventsStreamFailure = startEventsStreamFailure(SHARED_NAME)
+
+export const stopApplicationEventsStream = stopEventsStream(SHARED_NAME)
+
+export const clearApplicationEventsStream = clearEvents(SHARED_NAME)

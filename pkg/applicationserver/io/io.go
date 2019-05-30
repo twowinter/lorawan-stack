@@ -26,6 +26,8 @@ const bufferSize = 32
 
 // Server represents the Application Server to gateway frontends.
 type Server interface {
+	// FillContext fills the given context.
+	FillContext(ctx context.Context) context.Context
 	// FillApplicationContext fills the given context and identifiers.
 	FillApplicationContext(ctx context.Context, ids ttnpb.ApplicationIdentifiers) (context.Context, ttnpb.ApplicationIdentifiers, error)
 	// Subscribe subscribes an application or integration by its identifiers to the Application Server, and returns a
@@ -94,4 +96,21 @@ func (s *Subscription) SendUp(up *ttnpb.ApplicationUp) error {
 // Up returns the upstream channel.
 func (s *Subscription) Up() <-chan *ttnpb.ApplicationUp {
 	return s.upCh
+}
+
+// CleanDownlinks returns a copy of the given downlink items with only the fields that can be set by the application.
+func CleanDownlinks(items []*ttnpb.ApplicationDownlink) []*ttnpb.ApplicationDownlink {
+	res := make([]*ttnpb.ApplicationDownlink, 0, len(items))
+	for _, item := range items {
+		res = append(res, &ttnpb.ApplicationDownlink{
+			FPort:          item.FPort,
+			FRMPayload:     item.FRMPayload,
+			DecodedPayload: item.DecodedPayload,
+			ClassBC:        item.ClassBC,
+			Priority:       item.Priority,
+			Confirmed:      item.Confirmed,
+			CorrelationIDs: item.CorrelationIDs,
+		})
+	}
+	return res
 }

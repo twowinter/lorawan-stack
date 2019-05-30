@@ -33,6 +33,16 @@ type TLS struct {
 	RootCA      string `name:"root-ca" description:"Location of TLS root CA certificate (optional)"`
 	Certificate string `name:"certificate" description:"Location of TLS certificate"`
 	Key         string `name:"key" description:"Location of TLS private key"`
+	ACME        ACME   `name:"acme"`
+}
+
+// ACME represents ACME configuration.
+type ACME struct {
+	Enable   bool     `name:"enable" description:"Enable automated certificate management (ACME)"`
+	Endpoint string   `name:"endpoint" description:"ACME endpoint"`
+	Dir      string   `name:"dir" description:"Location of ACME storage directory"`
+	Email    string   `name:"email" description:"Email address to register with the ACME account"`
+	Hosts    []string `name:"hosts" description:"Hosts to enable automatic certificates for"`
 }
 
 var errNoKeyPair = errors.DefineFailedPrecondition("no_key_pair", "no TLS key pair")
@@ -50,7 +60,7 @@ func (t TLS) Config(ctx context.Context) (*tls.Config, error) {
 		if err != nil {
 			return err
 		}
-		cv.Store([]tls.Certificate{cert})
+		cv.Store(&cert)
 		logger.Debug("Loaded TLS certificate")
 		return nil
 	}
@@ -88,19 +98,8 @@ func (t TLS) Config(ctx context.Context) (*tls.Config, error) {
 
 	return &tls.Config{
 		RootCAs: rootCAs,
-		GetConfigForClient: func(info *tls.ClientHelloInfo) (*tls.Config, error) {
-			tlsConfig := &tls.Config{
-				Certificates:             cv.Load().([]tls.Certificate),
-				PreferServerCipherSuites: true,
-				MinVersion:               tls.VersionTLS12,
-			}
-			for _, proto := range info.SupportedProtos {
-				if proto == "h2" {
-					tlsConfig.NextProtos = []string{"h2"}
-					break
-				}
-			}
-			return tlsConfig, nil
+		GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			return cv.Load().(*tls.Certificate), nil
 		},
 	}, nil
 }

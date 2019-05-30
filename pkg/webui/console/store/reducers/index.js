@@ -15,6 +15,9 @@
 import { combineReducers } from 'redux'
 import { SHARED_NAME as APPLICATION_SHARED_NAME } from '../actions/application'
 import { SHARED_NAME as APPLICATIONS_SHARED_NAME } from '../actions/applications'
+import { SHARED_NAME as GATEWAY_SHARED_NAME } from '../actions/gateway'
+import { SHARED_NAME as GATEWAYS_SHARED_NAME } from '../actions/gateways'
+import { SHARED_NAME as DEVICE_SHARED_NAME } from '../actions/device'
 import user from './user'
 import client from './client'
 import init from './init'
@@ -23,9 +26,16 @@ import application from './application'
 import devices from './devices'
 import device from './device'
 import gateways from './gateways'
+import gateway from './gateway'
+import configuration from './configuration'
 import createNamedApiKeysReducer from './api-keys'
 import createNamedRightsReducer from './rights'
 import createNamedCollaboratorsReducer from './collaborators'
+import createNamedEventsReducer from './events'
+import createNamedApiKeyReducer from './api-key'
+import link from './link'
+import fetching from './ui/fetching'
+import error from './ui/error'
 
 export default combineReducers({
   user,
@@ -33,16 +43,32 @@ export default combineReducers({
   init,
   applications,
   application,
+  link,
   devices,
   device,
   gateways,
+  gateway,
+  configuration,
   apiKeys: combineReducers({
+    application: createNamedApiKeyReducer(APPLICATION_SHARED_NAME),
     applications: createNamedApiKeysReducer(APPLICATION_SHARED_NAME),
+    gateway: createNamedApiKeyReducer(GATEWAY_SHARED_NAME),
+    gateways: createNamedApiKeysReducer(GATEWAY_SHARED_NAME),
   }),
   rights: combineReducers({
     applications: createNamedRightsReducer(APPLICATIONS_SHARED_NAME),
+    gateways: createNamedRightsReducer(GATEWAYS_SHARED_NAME),
   }),
   collaborators: combineReducers({
     applications: createNamedCollaboratorsReducer(APPLICATION_SHARED_NAME),
+  }),
+  events: combineReducers({
+    applications: createNamedEventsReducer(APPLICATION_SHARED_NAME),
+    devices: createNamedEventsReducer(DEVICE_SHARED_NAME),
+    gateways: createNamedEventsReducer(GATEWAY_SHARED_NAME),
+  }),
+  ui: combineReducers({
+    fetching,
+    error,
   }),
 })

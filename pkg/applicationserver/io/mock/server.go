@@ -45,6 +45,11 @@ func NewServer() Server {
 	}
 }
 
+// FillContext implements io.Server.
+func (s *server) FillContext(ctx context.Context) context.Context {
+	return ctx
+}
+
 // FillApplicationContext implements io.Server.
 func (s *server) FillApplicationContext(ctx context.Context, ids ttnpb.ApplicationIdentifiers) (context.Context, ttnpb.ApplicationIdentifiers, error) {
 	return ctx, ids, nil
@@ -67,7 +72,7 @@ func (s *server) Subscribe(ctx context.Context, protocol string, ids ttnpb.Appli
 func (s *server) DownlinkQueuePush(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, items []*ttnpb.ApplicationDownlink) error {
 	s.downlinkQueueMu.Lock()
 	uid := unique.ID(ctx, ids)
-	s.downlinkQueue[uid] = append(s.downlinkQueue[uid], items...)
+	s.downlinkQueue[uid] = append(s.downlinkQueue[uid], io.CleanDownlinks(items)...)
 	s.downlinkQueueMu.Unlock()
 	return nil
 }
@@ -75,7 +80,7 @@ func (s *server) DownlinkQueuePush(ctx context.Context, ids ttnpb.EndDeviceIdent
 // DownlinkQueueReplace implements io.Server.
 func (s *server) DownlinkQueueReplace(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, items []*ttnpb.ApplicationDownlink) error {
 	s.downlinkQueueMu.Lock()
-	s.downlinkQueue[unique.ID(ctx, ids)] = items
+	s.downlinkQueue[unique.ID(ctx, ids)] = io.CleanDownlinks(items)
 	s.downlinkQueueMu.Unlock()
 	return nil
 }

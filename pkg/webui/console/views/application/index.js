@@ -28,19 +28,35 @@ import ApplicationGeneralSettings from '../application-general-settings'
 import ApplicationApiKeys from '../application-api-keys'
 import ApplicationLink from '../application-link'
 import ApplicationCollaborators from '../application-collaborators'
+import ApplicationData from '../application-data'
+import ApplicationPayloadFormatters from '../application-payload-formatters'
 
-import { getApplication } from '../../store/actions/application'
+import {
+  getApplication,
+  startApplicationEventsStream,
+  stopApplicationEventsStream,
+} from '../../store/actions/application'
+import {
+  selectSelectedApplication,
+  selectApplicationError,
+  selectApplicationFetching,
+} from '../../store/selectors/application'
 
 import Devices from '../devices'
 
-@connect(function ({ application }, props) {
+@connect(function (state, props) {
   return {
     appId: props.match.params.appId,
-    fetching: application.fetching,
-    application: application.application,
-    error: application.error,
+    fetching: selectApplicationFetching(state),
+    application: selectSelectedApplication(state),
+    error: selectApplicationError(state),
   }
-})
+},
+dispatch => ({
+  startStream: id => dispatch(startApplicationEventsStream(id)),
+  stopStream: id => dispatch(stopApplicationEventsStream(id)),
+  getApplication: id => dispatch(getApplication(id)),
+}))
 @withSideNavigation(function (props) {
   const matchedUrl = props.match.url
 
@@ -69,9 +85,21 @@ import Devices from '../devices'
         icon: 'link',
       },
       {
-        title: sharedMessages.payloadFormats,
-        path: `${matchedUrl}/payload-formats`,
-        icon: 'payload_formats',
+        title: sharedMessages.payloadFormatters,
+        icon: 'code',
+        nested: true,
+        items: [
+          {
+            title: sharedMessages.uplink,
+            path: `${matchedUrl}/payload-formatters/uplink`,
+            icon: 'uplink',
+          },
+          {
+            title: sharedMessages.downlink,
+            path: `${matchedUrl}/payload-formatters/downlink`,
+            icon: 'downlink',
+          },
+        ],
       },
       {
         title: sharedMessages.integrations,
@@ -111,17 +139,23 @@ import Devices from '../devices'
 export default class Application extends React.Component {
 
   componentDidMount () {
-    const { dispatch, appId } = this.props
+    const { appId, startStream, getApplication } = this.props
 
-    dispatch(getApplication(appId))
+    getApplication(appId)
+    startStream(appId)
+  }
+
+  componentWillUnmount () {
+    const { appId, stopStream } = this.props
+
+    stopStream(appId)
   }
 
   render () {
-    const { fetching, error, match, application } = this.props
+    const { fetching, match, error, application } = this.props
 
-    // show any application fetching error, e.g. not found, not rights, etc
     if (error) {
-      return 'ERROR'
+      throw error
     }
 
     if (fetching || !application) {
@@ -140,6 +174,8 @@ export default class Application extends React.Component {
         <Route path={`${match.path}/link`} component={ApplicationLink} />
         <Route path={`${match.path}/devices`} component={Devices} />
         <Route path={`${match.path}/collaborators`} component={ApplicationCollaborators} />
+        <Route path={`${match.path}/data`} component={ApplicationData} />
+        <Route path={`${match.path}/payload-formatters`} component={ApplicationPayloadFormatters} />
       </Switch>
     )
   }

@@ -26,8 +26,10 @@ import (
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"go.thethings.network/lorawan-stack/pkg/applicationserver/io"
+	"go.thethings.network/lorawan-stack/pkg/applicationserver/io/formatters"
 	iogrpc "go.thethings.network/lorawan-stack/pkg/applicationserver/io/grpc"
 	"go.thethings.network/lorawan-stack/pkg/applicationserver/io/mqtt"
+	"go.thethings.network/lorawan-stack/pkg/applicationserver/io/pubsub"
 	"go.thethings.network/lorawan-stack/pkg/applicationserver/io/web"
 	"go.thethings.network/lorawan-stack/pkg/auth/rights"
 	"go.thethings.network/lorawan-stack/pkg/component"
@@ -41,6 +43,7 @@ import (
 	"go.thethings.network/lorawan-stack/pkg/messageprocessors/javascript"
 	"go.thethings.network/lorawan-stack/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/pkg/unique"
+	_ "gocloud.dev/pubsub/natspubsub" // NATS backend for PubSub.
 	"google.golang.org/grpc"
 )
 
@@ -60,6 +63,11 @@ type ApplicationServer struct {
 	links              sync.Map
 	linkErrors         sync.Map
 	defaultSubscribers []*io.Subscription
+
+	grpc struct {
+		asDevices asEndDeviceRegistryServer
+		appAs     ttnpb.AppAsServer
+	}
 }
 
 // Context returns the context of the Application Server.
@@ -99,6 +107,11 @@ func New(c *component.Component, conf *Config) (as *ApplicationServer, err error
 		},
 	}
 
+	as.grpc.asDevices = asEndDeviceRegistryServer{
+		registry: as.deviceRegistry,
+	}
+	as.grpc.appAs = iogrpc.New(as)
+
 	ctx, cancel := context.WithCancel(as.Context())
 	defer func() {
 		if err != nil {
@@ -115,38 +128,25 @@ func New(c *component.Component, conf *Config) (as *ApplicationServer, err error
 			Config: conf.MQTT,
 		},
 	} {
-		for _, lis := range []struct {
-			Listen   string
-			Protocol string
-			Net      func(component.Listener) (net.Listener, error)
-		}{
-			{
-				Listen:   version.Config.Listen,
-				Protocol: "tcp",
-				Net:      component.Listener.TCP,
-			},
-			{
-				Listen:   version.Config.ListenTLS,
-				Protocol: "tls",
-				Net:      component.Listener.TLS,
-			},
+		for _, endpoint := range []component.Endpoint{
+			component.NewTCPEndpoint(version.Config.Listen, "MQTT"),
+			component.NewTLSEndpoint(version.Config.ListenTLS, "MQTT"),
 		} {
-			if lis.Listen == "" {
+			if endpoint.Address() == "" {
 				continue
 			}
-			var componentLis component.Listener
-			var netLis net.Listener
-			componentLis, err = as.ListenTCP(lis.Listen)
+			l, err := as.ListenTCP(endpoint.Address())
+			var lis net.Listener
 			if err == nil {
-				netLis, err = lis.Net(componentLis)
+				lis, err = endpoint.Listen(l)
 			}
 			if err != nil {
 				return nil, errListenFrontend.WithCause(err).WithAttributes(
-					"protocol", lis.Protocol,
-					"address", lis.Listen,
+					"address", endpoint.Address(),
+					"protocol", endpoint.Protocol(),
 				)
 			}
-			mqtt.Start(ctx, as, netLis, version.Format, lis.Protocol)
+			mqtt.Start(ctx, as, lis, version.Format, endpoint.Protocol())
 		}
 	}
 
@@ -156,6 +156,14 @@ func New(c *component.Component, conf *Config) (as *ApplicationServer, err error
 		as.webhooks = webhooks
 		as.defaultSubscribers = append(as.defaultSubscribers, webhooks.NewSubscription())
 		c.RegisterWeb(webhooks)
+	}
+
+	if len(conf.PubSub.PublishURLs) > 0 {
+		pubsub, err := pubsub.Start(as.Context(), as, formatters.JSON, conf.PubSub.PublishURLs, conf.PubSub.SubscribeURLs)
+		if err != nil {
+			return nil, err
+		}
+		as.defaultSubscribers = append(as.defaultSubscribers, pubsub...)
 	}
 
 	c.RegisterGRPC(as)
@@ -168,10 +176,8 @@ func New(c *component.Component, conf *Config) (as *ApplicationServer, err error
 // RegisterServices registers services provided by as at s.
 func (as *ApplicationServer) RegisterServices(s *grpc.Server) {
 	ttnpb.RegisterAsServer(s, as)
-	ttnpb.RegisterAsEndDeviceRegistryServer(s, &deviceRegistryRPC{
-		registry: as.deviceRegistry,
-	})
-	ttnpb.RegisterAppAsServer(s, iogrpc.New(as))
+	ttnpb.RegisterAsEndDeviceRegistryServer(s, as.grpc.asDevices)
+	ttnpb.RegisterAppAsServer(s, as.grpc.appAs)
 	if as.webhooks != nil {
 		ttnpb.RegisterApplicationWebhookRegistryServer(s, web.NewWebhookRegistryRPC(as.webhooks.Registry()))
 	}
@@ -181,6 +187,7 @@ func (as *ApplicationServer) RegisterServices(s *grpc.Server) {
 func (as *ApplicationServer) RegisterHandlers(s *runtime.ServeMux, conn *grpc.ClientConn) {
 	ttnpb.RegisterAsHandler(as.Context(), s, conn)
 	ttnpb.RegisterAsEndDeviceRegistryHandler(as.Context(), s, conn)
+	ttnpb.RegisterAppAsHandler(as.Context(), s, conn)
 	if as.webhooks != nil {
 		ttnpb.RegisterApplicationWebhookRegistryHandler(as.Context(), s, conn)
 	}
@@ -329,13 +336,13 @@ func (as *ApplicationServer) downlinkQueueOp(ctx context.Context, ids ttnpb.EndD
 // DownlinkQueuePush pushes the given downlink messages to the end device's application downlink queue.
 // This operation changes FRMPayload in the given items.
 func (as *ApplicationServer) DownlinkQueuePush(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, items []*ttnpb.ApplicationDownlink) error {
-	return as.downlinkQueueOp(ctx, ids, items, ttnpb.AsNsClient.DownlinkQueuePush)
+	return as.downlinkQueueOp(ctx, ids, io.CleanDownlinks(items), ttnpb.AsNsClient.DownlinkQueuePush)
 }
 
 // DownlinkQueueReplace replaces the end device's application downlink queue with the given downlink messages.
 // This operation changes FRMPayload in the given items.
 func (as *ApplicationServer) DownlinkQueueReplace(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, items []*ttnpb.ApplicationDownlink) error {
-	return as.downlinkQueueOp(ctx, ids, items, ttnpb.AsNsClient.DownlinkQueueReplace)
+	return as.downlinkQueueOp(ctx, ids, io.CleanDownlinks(items), ttnpb.AsNsClient.DownlinkQueueReplace)
 }
 
 var errNoAppSKey = errors.DefineCorruption("no_app_s_key", "no AppSKey")
@@ -725,6 +732,7 @@ func (as *ApplicationServer) recalculateDownlinkQueue(ctx context.Context, dev *
 			FCnt:           newSession.LastAFCntDown + 1,
 			Confirmed:      oldItem.Confirmed,
 			ClassBC:        oldItem.ClassBC,
+			Priority:       oldItem.Priority,
 			CorrelationIDs: oldItem.CorrelationIDs,
 		}
 		newItem.FRMPayload, err = crypto.EncryptDownlink(newAppSKey, newSession.DevAddr, newItem.FCnt, frmPayload)

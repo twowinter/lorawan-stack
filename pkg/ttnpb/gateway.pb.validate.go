@@ -1531,6 +1531,101 @@ var _ interface {
 	ErrorName() string
 } = ListGatewayAPIKeysRequestValidationError{}
 
+// ValidateFields checks the field values on GetGatewayAPIKeyRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *GetGatewayAPIKeyRequest) ValidateFields(paths ...string) error {
+	if m == nil {
+		return nil
+	}
+
+	if len(paths) == 0 {
+		paths = GetGatewayAPIKeyRequestFieldPathsNested
+	}
+
+	for name, subs := range _processPaths(append(paths[:0:0], paths...)) {
+		_ = subs
+		switch name {
+		case "gateway_ids":
+
+			if v, ok := interface{}(&m.GatewayIdentifiers).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return GetGatewayAPIKeyRequestValidationError{
+						field:  "gateway_ids",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		case "key_id":
+			// no validation rules for KeyID
+		default:
+			return GetGatewayAPIKeyRequestValidationError{
+				field:  name,
+				reason: "invalid field path",
+			}
+		}
+	}
+	return nil
+}
+
+// GetGatewayAPIKeyRequestValidationError is the validation error returned by
+// GetGatewayAPIKeyRequest.ValidateFields if the designated constraints aren't met.
+type GetGatewayAPIKeyRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetGatewayAPIKeyRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetGatewayAPIKeyRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetGatewayAPIKeyRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetGatewayAPIKeyRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetGatewayAPIKeyRequestValidationError) ErrorName() string {
+	return "GetGatewayAPIKeyRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetGatewayAPIKeyRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetGatewayAPIKeyRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetGatewayAPIKeyRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetGatewayAPIKeyRequestValidationError{}
+
 // ValidateFields checks the field values on CreateGatewayAPIKeyRequest with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, an error is returned.
@@ -2345,6 +2440,18 @@ func (m *GatewayConnectionStats) ValidateFields(paths ...string) error {
 
 		case "downlink_count":
 			// no validation rules for DownlinkCount
+		case "round_trip_times":
+
+			if v, ok := interface{}(m.GetRoundTripTimes()).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return GatewayConnectionStatsValidationError{
+						field:  "round_trip_times",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
 		default:
 			return GatewayConnectionStatsValidationError{
 				field:  name,
@@ -2498,3 +2605,123 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GatewayRadio_TxConfigurationValidationError{}
+
+// ValidateFields checks the field values on
+// GatewayConnectionStats_RoundTripTimes with the rules defined in the proto
+// definition for this message. If any rules are violated, an error is returned.
+func (m *GatewayConnectionStats_RoundTripTimes) ValidateFields(paths ...string) error {
+	if m == nil {
+		return nil
+	}
+
+	if len(paths) == 0 {
+		paths = GatewayConnectionStats_RoundTripTimesFieldPathsNested
+	}
+
+	for name, subs := range _processPaths(append(paths[:0:0], paths...)) {
+		_ = subs
+		switch name {
+		case "min":
+
+			if v, ok := interface{}(&m.Min).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return GatewayConnectionStats_RoundTripTimesValidationError{
+						field:  "min",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		case "max":
+
+			if v, ok := interface{}(&m.Max).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return GatewayConnectionStats_RoundTripTimesValidationError{
+						field:  "max",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		case "median":
+
+			if v, ok := interface{}(&m.Median).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return GatewayConnectionStats_RoundTripTimesValidationError{
+						field:  "median",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		case "count":
+			// no validation rules for Count
+		default:
+			return GatewayConnectionStats_RoundTripTimesValidationError{
+				field:  name,
+				reason: "invalid field path",
+			}
+		}
+	}
+	return nil
+}
+
+// GatewayConnectionStats_RoundTripTimesValidationError is the validation error
+// returned by GatewayConnectionStats_RoundTripTimes.ValidateFields if the
+// designated constraints aren't met.
+type GatewayConnectionStats_RoundTripTimesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GatewayConnectionStats_RoundTripTimesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GatewayConnectionStats_RoundTripTimesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GatewayConnectionStats_RoundTripTimesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GatewayConnectionStats_RoundTripTimesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GatewayConnectionStats_RoundTripTimesValidationError) ErrorName() string {
+	return "GatewayConnectionStats_RoundTripTimesValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GatewayConnectionStats_RoundTripTimesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGatewayConnectionStats_RoundTripTimes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GatewayConnectionStats_RoundTripTimesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GatewayConnectionStats_RoundTripTimesValidationError{}

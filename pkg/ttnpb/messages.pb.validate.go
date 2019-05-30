@@ -492,10 +492,17 @@ func (m *ApplicationUplink) ValidateFields(paths ...string) error {
 
 		case "f_port":
 
-			if m.GetFPort() > 255 {
+			if val := m.GetFPort(); val < 1 || val > 255 {
 				return ApplicationUplinkValidationError{
 					field:  "f_port",
-					reason: "value must be less than or equal to 255",
+					reason: "value must be inside range [1, 255]",
+				}
+			}
+
+			if _, ok := _ApplicationUplink_FPort_NotInLookup[m.GetFPort()]; ok {
+				return ApplicationUplinkValidationError{
+					field:  "f_port",
+					reason: "value must not be in list [224]",
 				}
 			}
 
@@ -616,6 +623,10 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ApplicationUplinkValidationError{}
+
+var _ApplicationUplink_FPort_NotInLookup = map[uint32]struct{}{
+	224: {},
+}
 
 // ValidateFields checks the field values on ApplicationLocation with the rules
 // defined in the proto definition for this message. If any rules are
@@ -883,10 +894,17 @@ func (m *ApplicationDownlink) ValidateFields(paths ...string) error {
 
 		case "f_port":
 
-			if m.GetFPort() > 255 {
+			if val := m.GetFPort(); val < 1 || val > 255 {
 				return ApplicationDownlinkValidationError{
 					field:  "f_port",
-					reason: "value must be less than or equal to 255",
+					reason: "value must be inside range [1, 255]",
+				}
+			}
+
+			if _, ok := _ApplicationDownlink_FPort_NotInLookup[m.GetFPort()]; ok {
+				return ApplicationDownlinkValidationError{
+					field:  "f_port",
+					reason: "value must not be in list [224]",
 				}
 			}
 
@@ -1008,6 +1026,10 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ApplicationDownlinkValidationError{}
+
+var _ApplicationDownlink_FPort_NotInLookup = map[uint32]struct{}{
+	224: {},
+}
 
 // ValidateFields checks the field values on ApplicationDownlinks with the
 // rules defined in the proto definition for this message. If any rules are
@@ -1320,6 +1342,125 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ApplicationInvalidatedDownlinksValidationError{}
+
+// ValidateFields checks the field values on DownlinkQueueOperation with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *DownlinkQueueOperation) ValidateFields(paths ...string) error {
+	if m == nil {
+		return nil
+	}
+
+	if len(paths) == 0 {
+		paths = DownlinkQueueOperationFieldPathsNested
+	}
+
+	for name, subs := range _processPaths(append(paths[:0:0], paths...)) {
+		_ = subs
+		switch name {
+		case "end_device_ids":
+
+			if v, ok := interface{}(&m.EndDeviceIdentifiers).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return DownlinkQueueOperationValidationError{
+						field:  "end_device_ids",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		case "operation":
+
+			if _, ok := DownlinkQueueOperation_Operation_name[int32(m.GetOperation())]; !ok {
+				return DownlinkQueueOperationValidationError{
+					field:  "operation",
+					reason: "value must be one of the defined enum values",
+				}
+			}
+
+		case "downlinks":
+
+			for idx, item := range m.GetDownlinks() {
+				_, _ = idx, item
+
+				if v, ok := interface{}(item).(interface{ ValidateFields(...string) error }); ok {
+					if err := v.ValidateFields(subs...); err != nil {
+						return DownlinkQueueOperationValidationError{
+							field:  fmt.Sprintf("downlinks[%v]", idx),
+							reason: "embedded message failed validation",
+							cause:  err,
+						}
+					}
+				}
+
+			}
+
+		default:
+			return DownlinkQueueOperationValidationError{
+				field:  name,
+				reason: "invalid field path",
+			}
+		}
+	}
+	return nil
+}
+
+// DownlinkQueueOperationValidationError is the validation error returned by
+// DownlinkQueueOperation.ValidateFields if the designated constraints aren't met.
+type DownlinkQueueOperationValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DownlinkQueueOperationValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DownlinkQueueOperationValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DownlinkQueueOperationValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DownlinkQueueOperationValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DownlinkQueueOperationValidationError) ErrorName() string {
+	return "DownlinkQueueOperationValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DownlinkQueueOperationValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDownlinkQueueOperation.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DownlinkQueueOperationValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DownlinkQueueOperationValidationError{}
 
 // ValidateFields checks the field values on ApplicationUp with the rules
 // defined in the proto definition for this message. If any rules are

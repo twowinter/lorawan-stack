@@ -28,13 +28,14 @@ import (
 	"go.thethings.network/lorawan-stack/pkg/errors"
 	"go.thethings.network/lorawan-stack/pkg/log"
 	"go.thethings.network/lorawan-stack/pkg/ttnpb"
+	"go.thethings.network/lorawan-stack/pkg/unique"
 	"go.thethings.network/lorawan-stack/pkg/util/test"
 	"go.thethings.network/lorawan-stack/pkg/util/test/assertions/should"
 )
 
 var (
-	registeredApplicationUID = "test-app"
 	registeredApplicationID  = ttnpb.ApplicationIdentifiers{ApplicationID: "test-app"}
+	registeredApplicationUID = unique.ID(test.Context(), registeredApplicationID)
 	registeredApplicationKey = "test-key"
 
 	timeout = 10 * test.Delay
@@ -208,7 +209,7 @@ func TestTraffic(t *testing.T) {
 						FCnt:           100, // This gets discarded.
 						FRMPayload:     []byte{0x01, 0x01, 0x01},
 						Confirmed:      true,
-						CorrelationIDs: []string{"test"}, // This gets discarded.
+						CorrelationIDs: []string{"test"},
 					},
 					{
 						FPort:      2,
@@ -236,9 +237,10 @@ func TestTraffic(t *testing.T) {
 			a.So(res.Downlinks, should.HaveLength, 3)
 			a.So(res.Downlinks, should.Resemble, []*ttnpb.ApplicationDownlink{
 				{
-					FPort:      1,
-					Confirmed:  true,
-					FRMPayload: []byte{0x01, 0x01, 0x01},
+					FPort:          1,
+					Confirmed:      true,
+					FRMPayload:     []byte{0x01, 0x01, 0x01},
+					CorrelationIDs: []string{"test"},
 				},
 				{
 					FPort:      2,

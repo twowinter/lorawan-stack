@@ -35,6 +35,9 @@ var DefaultLogConfig = config.Log{
 var DefaultTLSConfig = config.TLS{
 	Certificate: "cert.pem",
 	Key:         "key.pem",
+	ACME: config.ACME{
+		Endpoint: "https://acme-v01.api.letsencrypt.org/directory",
+	},
 }
 
 // DefaultClusterConfig is the default cluster configuration.
@@ -57,6 +60,11 @@ var DefaultHTTPConfig = config.HTTP{
 	Health: config.Health{
 		Enable: true,
 	},
+}
+
+// DefaultInteropConfig is the default interop config.
+var DefaultInteropConfig = config.Interop{
+	ListenTLS: ":8886",
 }
 
 // DefaultGRPCConfig is the default config for GRPC.
@@ -109,6 +117,7 @@ var DefaultServiceBase = config.ServiceBase{
 	Events:           DefaultEventsConfig,
 	GRPC:             DefaultGRPCConfig,
 	HTTP:             DefaultHTTPConfig,
+	Interop:          DefaultInteropConfig,
 	TLS:              DefaultTLSConfig,
 	Blob:             DefaultBlobConfig,
 	FrequencyPlans:   DefaultFrequencyPlansConfig,

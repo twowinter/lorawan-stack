@@ -44,10 +44,6 @@ const (
 	fOptsCapacity = 15
 )
 
-func timePtr(t time.Time) *time.Time {
-	return &t
-}
-
 // WindowEndFunc is a function, which is used by Network Server to determine the end of deduplication and cooldown windows.
 type WindowEndFunc func(ctx context.Context, up *ttnpb.UplinkMessage) <-chan time.Time
 
@@ -140,11 +136,6 @@ type NetworkServer struct {
 	defaultMACSettings ttnpb.MACSettings
 }
 
-// Context returns the context of the Network Server.
-func (ns *NetworkServer) Context() context.Context {
-	return ns.ctx
-}
-
 // Option configures the NetworkServer.
 type Option func(ns *NetworkServer)
 
@@ -172,7 +163,7 @@ func WithNsJsClientFunc(f NsJsClientFunc) Option {
 	}
 }
 
-// WithASUplinkHandler overrides the default function called, for sending the uplink to AS.
+// WithASUplinkHandler overrides the default function called, which is used for sending the uplink to AS.
 func WithASUplinkHandler(f func(context.Context, ttnpb.ApplicationIdentifiers, *ttnpb.ApplicationUp) (bool, error)) Option {
 	return func(ns *NetworkServer) {
 		ns.handleASUplink = f
@@ -308,9 +299,11 @@ func New(c *component.Component, conf *Config, opts ...Option) (*NetworkServer, 
 	hooks.RegisterUnaryHook("/ttn.lorawan.v3.GsNs", rpclog.NamespaceHook, rpclog.UnaryNamespaceHook("networkserver"))
 	hooks.RegisterStreamHook("/ttn.lorawan.v3.AsNs", rpclog.NamespaceHook, rpclog.StreamNamespaceHook("networkserver"))
 	hooks.RegisterUnaryHook("/ttn.lorawan.v3.AsNs", rpclog.NamespaceHook, rpclog.UnaryNamespaceHook("networkserver"))
+	hooks.RegisterUnaryHook("/ttn.lorawan.v3.Ns", rpclog.NamespaceHook, rpclog.UnaryNamespaceHook("networkserver"))
 	hooks.RegisterUnaryHook("/ttn.lorawan.v3.GsNs", cluster.HookName, c.ClusterAuthUnaryHook())
 	hooks.RegisterStreamHook("/ttn.lorawan.v3.AsNs", cluster.HookName, c.ClusterAuthStreamHook())
 	hooks.RegisterUnaryHook("/ttn.lorawan.v3.AsNs", cluster.HookName, c.ClusterAuthUnaryHook())
+	hooks.RegisterUnaryHook("/ttn.lorawan.v3.Ns", cluster.HookName, c.ClusterAuthUnaryHook())
 
 	ns.RegisterTask(ns.Context(), "process_downlink", func(ctx context.Context) error {
 		for {
@@ -330,16 +323,23 @@ func New(c *component.Component, conf *Config, opts ...Option) (*NetworkServer, 
 	return ns, nil
 }
 
+// Context returns the context of the Network Server.
+func (ns *NetworkServer) Context() context.Context {
+	return ns.ctx
+}
+
 // RegisterServices registers services provided by ns at s.
 func (ns *NetworkServer) RegisterServices(s *grpc.Server) {
 	ttnpb.RegisterGsNsServer(s, ns)
 	ttnpb.RegisterAsNsServer(s, ns)
 	ttnpb.RegisterNsEndDeviceRegistryServer(s, ns)
+	ttnpb.RegisterNsServer(s, ns)
 }
 
 // RegisterHandlers registers gRPC handlers.
 func (ns *NetworkServer) RegisterHandlers(s *runtime.ServeMux, conn *grpc.ClientConn) {
 	ttnpb.RegisterNsEndDeviceRegistryHandler(ns.Context(), s, conn)
+	ttnpb.RegisterNsHandler(ns.Context(), s, conn)
 }
 
 // Roles returns the roles that the Network Server fulfills.

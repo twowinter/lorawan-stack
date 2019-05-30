@@ -27,8 +27,14 @@ import Tabs from '../../../components/tabs'
 import IntlHelmet from '../../../lib/components/intl-helmet'
 
 import DeviceOverview from '../device-overview'
+import DeviceData from '../device-data'
+import DeviceGeneralSettings from '../device-general-settings'
+import DeviceLocation from '../device-location'
 
-import { getDevice } from '../../store/actions/device'
+import {
+  getDevice,
+  stopDeviceEventsStream,
+} from '../../store/actions/device'
 
 import style from './device.styl'
 
@@ -36,23 +42,19 @@ const m = defineMessages({
   title: '%s - {deviceName} - The Things Network Console',
 })
 
-const tabs = [
-  { title: sharedMessages.overview, name: 'overview' },
-  { title: sharedMessages.data, name: 'data' },
-  { title: sharedMessages.location, name: 'location' },
-  { title: sharedMessages.payloadFormats, name: 'develop' },
-  { title: sharedMessages.generalSettings, name: 'general-settings' },
-]
-
-@connect(function ({ device, application }, props) {
+@connect(function ({ device }, props) {
   return {
-    appName: application.application.name,
     deviceName: device.device && device.device.name,
+    devIds: device.device && device.device.ids,
     devId: props.match.params.devId,
     fetching: device.fetching,
     error: device.error,
   }
-})
+}, dispatch => ({
+  getDevice: (appId, devId, selectors, config) =>
+    dispatch(getDevice(appId, devId, selectors, config)),
+  stopStream: id => dispatch(stopDeviceEventsStream(id)),
+}))
 @withBreadcrumb('device.single', function (props) {
   const { devId } = props
   const { appId } = props.match.params
@@ -67,18 +69,40 @@ const tabs = [
 export default class Device extends React.Component {
 
   componentDidMount () {
-    const { dispatch, devId, match } = this.props
+    const { getDevice, devId, match } = this.props
     const { appId } = match.params
 
-    dispatch(getDevice(appId, devId, 'name,description,session,version_ids,root_keys', { ignoreNotFound: true }))
+    getDevice(
+      appId,
+      devId,
+      [
+        'name',
+        'description',
+        'session',
+        'version_ids',
+        'root_keys',
+        'frequency_plan_id',
+        'mac_settings.resets_f_cnt',
+        'resets_join_nonces',
+        'supports_class_c',
+        'supports_join',
+        'lorawan_version',
+        'lorawan_phy_version',
+        'locations',
+      ],
+      { ignoreNotFound: true })
   }
 
-  handleTabChange () {
+  componentWillUnmount () {
+    const { devIds, stopStream } = this.props
 
+    stopStream(devIds)
   }
+
 
   render () {
     const { fetching, error, match, devId, deviceName } = this.props
+    const { appId } = match.params
 
     if (fetching) {
       return (
@@ -90,8 +114,18 @@ export default class Device extends React.Component {
 
     // show any device fetching error, e.g. not found, no rights, etc
     if (error) {
-      return 'ERROR'
+      throw error
     }
+
+    const basePath = `/console/applications/${appId}/devices/${devId}`
+
+    const tabs = [
+      { title: sharedMessages.overview, name: 'overview', link: basePath },
+      { title: sharedMessages.data, name: 'data', link: `${basePath}/data` },
+      { title: sharedMessages.location, name: 'location', link: `${basePath}/location` },
+      { title: sharedMessages.payloadFormatters, name: 'develop' },
+      { title: sharedMessages.generalSettings, name: 'general-settings', link: `${basePath}/general-settings` },
+    ]
 
     return (
       <React.Fragment>
@@ -101,19 +135,20 @@ export default class Device extends React.Component {
         <Container>
           <Row>
             <Col lg={12}>
-              <h2 className={style.title}>{devId}</h2>
+              <h2 className={style.title}>{deviceName || devId}</h2>
               <Tabs
                 narrow
-                active="overview"
                 tabs={tabs}
-                onTabChange={this.handleTabChange}
                 className={style.tabs}
               />
             </Col>
           </Row>
         </Container>
         <Switch>
-          <Route exact path={match.path} component={DeviceOverview} />
+          <Route exact path={basePath} component={DeviceOverview} />
+          <Route exact path={`${basePath}/data`} component={DeviceData} />
+          <Route exact path={`${basePath}/location`} component={DeviceLocation} />
+          <Route exact path={`${basePath}/general-settings`} component={DeviceGeneralSettings} />
         </Switch>
       </React.Fragment>
     )
